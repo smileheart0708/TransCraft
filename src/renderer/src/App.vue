@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
+import AppVersions from './components/AppVersions.vue'
 
 const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 </script>
@@ -22,5 +22,5 @@ const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
       <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
     </div>
   </div>
-  <Versions />
+  <AppVersions />
 </template>
