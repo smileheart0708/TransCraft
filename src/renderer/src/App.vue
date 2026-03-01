@@ -5,6 +5,9 @@ const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 </script>
 
 <template>
+  <!-- 标签栏可拖动区域 -->
+  <div class="titlebar-drag-region"></div>
+
   <img alt="logo" class="logo" src="./assets/electron.svg" />
   <div class="creator">Powered by electron-vite</div>
   <div class="text">
