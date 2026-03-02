@@ -141,6 +141,8 @@ jobs:
         run: pnpm build
 
       - name: Build Windows Installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --win nsis --x64
 
       - name: Upload Windows Artifact
@@ -177,6 +179,8 @@ jobs:
         run: pnpm build
 
       - name: Build macOS Disk Image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --mac dmg --x64 --arm64
 
       - name: Upload macOS Artifact
@@ -213,6 +217,8 @@ jobs:
         run: pnpm build
 
       - name: Build Linux Packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --linux AppImage deb --x64
 
       - name: Upload Linux Artifacts
