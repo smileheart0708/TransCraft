@@ -11,16 +11,16 @@ directories:
 
 # 打包时包含的文件规则（! 开头表示排除）
 files:
-  - '!**/.vscode/*'  # 排除 VSCode 配置文件
-  - '!src/*'  # 排除源代码目录（已编译到 out 目录）
-  - '!electron.vite.config.{js,ts,mjs,cjs}'  # 排除 Vite 配置文件
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'  # 排除开发工具配置和文档
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'  # 排除环境变量和包管理器文件
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'  # 排除 TypeScript 配置文件
+  - '!**/.vscode/*' # 排除 VSCode 配置文件
+  - '!src/*' # 排除源代码目录（已编译到 out 目录）
+  - '!electron.vite.config.{js,ts,mjs,cjs}' # 排除 Vite 配置文件
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}' # 排除开发工具配置和文档
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}' # 排除环境变量和包管理器文件
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}' # 排除 TypeScript 配置文件
 
 # 不打包进 asar 归档的文件（需要以原始文件形式访问）
 asarUnpack:
-  - resources/**  # resources 目录下的所有文件保持原始文件结构
+  - resources/** # resources 目录下的所有文件保持原始文件结构
 
 # Windows 平台配置
 win:
@@ -70,9 +70,9 @@ dmg:
 linux:
   # 构建目标格式
   target:
-    - AppImage  # 便携式应用镜像
-    - snap      # Snap 包
-    - deb       # Debian/Ubuntu 安装包
+    - AppImage # 便携式应用镜像
+    - snap # Snap 包
+    - deb # Debian/Ubuntu 安装包
   # 维护者信息
   maintainer: electronjs.org
   # 应用分类
