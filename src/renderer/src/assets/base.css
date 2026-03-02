@@ -62,14 +62,8 @@ body {
   background: rgb(var(--ui-bg));
   line-height: 1.6;
   font-family:
-    'Segoe UI Variable Display',
-    'Segoe UI Variable Text',
-    'Segoe UI',
-    'SF Pro Text',
-    'PingFang SC',
-    'Noto Sans SC',
-    'Microsoft YaHei UI',
-    sans-serif;
+    'Segoe UI Variable Display', 'Segoe UI Variable Text', 'Segoe UI', 'SF Pro Text', 'PingFang SC',
+    'Noto Sans SC', 'Microsoft YaHei UI', sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
