@@ -3,6 +3,7 @@ import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import windowStateKeeper from 'electron-window-state'
+import ElectronStore from 'electron-store'
 import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater, checkForUpdates } from './updater'
 
@@ -12,14 +13,18 @@ type TitleBarWindowState = {
   isFocused: boolean
 }
 
-type ThemePreference = 'auto' | 'light' | 'dark'
-type ResolvedTheme = Exclude<ThemePreference, 'auto'>
+type ThemePreference = 'system' | 'light' | 'dark'
+type ResolvedTheme = Exclude<ThemePreference, 'system'>
 type OverlayThemePalette = {
   activeColor: string
   inactiveColor: string
   activeSymbolColor: string
   inactiveSymbolColor: string
   height: number
+}
+
+type StoreSchema = {
+  theme: ThemePreference
 }
 
 const IS_MAC = process.platform === 'darwin'
@@ -42,11 +47,17 @@ const OVERLAY_THEMES = {
   }
 } satisfies Record<ResolvedTheme, OverlayThemePalette>
 
-let themePreference: ThemePreference = 'auto'
+const store = new ElectronStore<StoreSchema>({
+  defaults: {
+    theme: 'system'
+  }
+})
+
+let themePreference: ThemePreference = store.get('theme', 'system')
 
 function resolveOverlayTheme(preference: ThemePreference, isFocused = true): TitleBarOverlay {
   const resolvedTheme: ResolvedTheme =
-    preference === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : preference
+    preference === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : preference
 
   const palette = OVERLAY_THEMES[resolvedTheme]
 
@@ -58,7 +69,7 @@ function resolveOverlayTheme(preference: ThemePreference, isFocused = true): Tit
 }
 
 function isThemePreference(value: unknown): value is ThemePreference {
-  return value === 'auto' || value === 'light' || value === 'dark'
+  return value === 'system' || value === 'light' || value === 'dark'
 }
 
 function getWindowState(window: BrowserWindow): TitleBarWindowState {
@@ -123,7 +134,7 @@ function createWindow(): void {
     ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: resolveOverlayTheme(themePreference) } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false
     }
   }
@@ -154,7 +165,7 @@ function createWindow(): void {
 }
 
 nativeTheme.on('updated', () => {
-  if (themePreference !== 'auto') return
+  if (themePreference !== 'system') return
   updateAllTitleBarThemes()
 })
 
@@ -187,6 +198,7 @@ app.whenReady().then(() => {
   ipcMain.handle('theme:set-preference', (_event, preference: unknown) => {
     if (!isThemePreference(preference)) return
     themePreference = preference
+    store.set('theme', preference)
     updateAllTitleBarThemes()
   })
 

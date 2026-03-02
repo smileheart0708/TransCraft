@@ -1,6 +1,7 @@
 {
   "name": "transcraft",
   "version": "0.0.1-beta",
+  "type": "module",
   "description": "一个跨平台的minecraft翻译工具",
   "main": "./out/main/index.js",
   "author": "SmileHeart",

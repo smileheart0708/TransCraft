@@ -1,6 +1,8 @@
-import { autoUpdater } from 'electron-updater'
+import updater from 'electron-updater'
 import { dialog } from 'electron'
 import { is } from '@electron-toolkit/utils'
+
+const { autoUpdater } = updater
 
 // 配置自动更新器
 export function setupAutoUpdater(): void {
