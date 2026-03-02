@@ -2,6 +2,7 @@ import type { BrowserWindowConstructorOptions, TitleBarOverlay } from 'electron'
 import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import windowStateKeeper from 'electron-window-state'
 import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater, checkForUpdates } from './updater'
 
@@ -105,9 +106,17 @@ function registerWindowStateBridge(window: BrowserWindow): void {
 }
 
 function createWindow(): void {
+  // 初始化窗口状态管理器
+  const windowState = windowStateKeeper({
+    defaultWidth: 900,
+    defaultHeight: 670
+  })
+
   const windowOptions: BrowserWindowConstructorOptions = {
-    width: 900,
-    height: 670,
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
     show: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
@@ -120,6 +129,9 @@ function createWindow(): void {
   }
 
   const mainWindow = new BrowserWindow(windowOptions)
+
+  // 让 electron-window-state 管理窗口状态
+  windowState.manage(mainWindow)
 
   registerWindowStateBridge(mainWindow)
 
