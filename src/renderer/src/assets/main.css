@@ -1,33 +1,170 @@
 @import 'tailwindcss';
 @import './base.css';
 
-/* 标签栏可拖动区域 */
-.titlebar-drag-region {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 35px;
-  -webkit-app-region: drag;
-  z-index: 9999;
+:root {
+  --tb-height: 36px;
+  --tb-bg: rgba(18, 20, 28, 0.78);
+  --tb-bg-inactive: rgba(18, 20, 28, 0.62);
+  --tb-border: rgba(255, 255, 255, 0.14);
+  --tb-border-inactive: rgba(255, 255, 255, 0.08);
+  --tb-tabs-gap: 8px;
+  --tb-controls-width: 138px;
+  --tb-mac-left-padding: 76px;
 }
 
-/* 标签栏内的可交互元素（按钮、链接等）需要禁用拖动 */
-.titlebar-drag-region button,
-.titlebar-drag-region a,
-.titlebar-drag-region input,
-.titlebar-drag-region select {
-  -webkit-app-region: no-drag;
+html,
+body,
+#app {
+  height: 100%;
 }
 
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
   overflow: hidden;
   background-image: url('./wavy-lines.svg');
   background-size: cover;
+  background-position: center;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100%;
+}
+
+.immersive-titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: env(titlebar-area-height, var(--tb-height));
+  border-bottom: 1px solid var(--tb-border);
+  background: var(--tb-bg);
+  backdrop-filter: blur(18px) saturate(120%);
+  z-index: 1000;
   user-select: none;
+  -webkit-user-select: none;
+  /* Electron draggable region */
+  -webkit-app-region: drag;
+}
+
+.app-shell.is-blurred .immersive-titlebar {
+  border-bottom-color: var(--tb-border-inactive);
+  background: var(--tb-bg-inactive);
+}
+
+.tb-content {
+  position: relative;
+  left: env(titlebar-area-x, 0);
+  width: env(titlebar-area-width, 100%);
+  height: 100%;
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+.tb-no-drag,
+.tb-no-drag * {
+  /* Keep interactive controls clickable inside drag area */
+  -webkit-app-region: no-drag;
+}
+
+.tb-left,
+.tb-center,
+.tb-right {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tb-left {
+  gap: 10px;
+  min-width: 220px;
+}
+
+.tb-logo {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
+  -webkit-user-drag: none;
+}
+
+.tb-workspace {
+  color: var(--ev-c-text-2);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.tb-center {
+  justify-content: center;
+}
+
+.tb-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tb-tabs-gap);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tb-tab {
+  color: var(--ev-c-text-2);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  min-width: 88px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.tb-tab:hover {
+  color: var(--ev-c-text-1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tb-tab.is-active {
+  color: var(--ev-c-text-1);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tb-right {
+  justify-content: flex-end;
+}
+
+.tb-window-controls-spacer {
+  width: var(--tb-controls-width);
+  pointer-events: none;
+}
+
+.app-shell.platform-darwin .tb-content {
+  padding-left: var(--tb-mac-left-padding);
+}
+
+.app-shell.platform-darwin.is-maximized .tb-content {
+  padding-left: 64px;
+}
+
+.app-shell.platform-darwin .tb-window-controls-spacer {
+  width: 0;
+}
+
+.app-main {
+  position: relative;
+  min-height: 100%;
+  padding-top: env(titlebar-area-height, var(--tb-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 code {
@@ -44,14 +181,6 @@ code {
     Liberation Mono,
     monospace;
   font-size: 85%;
-}
-
-#app {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  margin-bottom: 80px;
 }
 
 .logo {
@@ -146,8 +275,10 @@ code {
 
 .versions {
   position: absolute;
-  bottom: 30px;
-  margin: 0 auto;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
   padding: 15px 0;
   font-family: 'Menlo', 'Lucida Console', monospace;
   display: inline-flex;
@@ -172,12 +303,33 @@ code {
 }
 
 @media (max-width: 720px) {
+  .tb-left {
+    min-width: auto;
+  }
+
+  .tb-workspace {
+    display: none;
+  }
+
+  .tb-tab {
+    min-width: 72px;
+    padding-inline: 10px;
+  }
+
   .text {
     font-size: 20px;
   }
 }
 
 @media (max-width: 620px) {
+  .tb-tabs {
+    gap: 4px;
+  }
+
+  .tb-tab {
+    min-width: 64px;
+  }
+
   .versions {
     display: none;
   }

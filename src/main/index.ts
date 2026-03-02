@@ -1,28 +1,74 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import type { BrowserWindowConstructorOptions, TitleBarOverlay } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+type TitleBarWindowState = {
+  isMaximized: boolean
+  isFullScreen: boolean
+  isFocused: boolean
+}
+
+const IS_MAC = process.platform === 'darwin'
+const SUPPORTS_TITLEBAR_OVERLAY = process.platform === 'win32' || process.platform === 'linux'
+
+const THEMES = {
+  dark: { color: '#1e1e1e', symbolColor: '#ffffff', height: 36 },
+  light: { color: '#ffffff', symbolColor: '#000000', height: 36 }
+}
+
+function getOverlayTheme(): TitleBarOverlay {
+  const isDark = nativeTheme.shouldUseDarkColors
+  return isDark ? THEMES.dark : THEMES.light
+}
+
+function getWindowState(window: BrowserWindow): TitleBarWindowState {
+  return {
+    isMaximized: window.isMaximized(),
+    isFullScreen: window.isFullScreen(),
+    isFocused: window.isFocused()
+  }
+}
+
+function publishWindowState(window: BrowserWindow): void {
+  if (window.isDestroyed()) return
+  window.webContents.send('titlebar:state-changed', getWindowState(window))
+}
+
+function updateTitleBarTheme(window: BrowserWindow): void {
+  if (!SUPPORTS_TITLEBAR_OVERLAY || window.isDestroyed()) return
+  window.setTitleBarOverlay(getOverlayTheme())
+}
+
+function registerWindowStateBridge(window: BrowserWindow): void {
+  window.on('maximize', () => publishWindowState(window))
+  window.on('unmaximize', () => publishWindowState(window))
+  window.on('enter-full-screen', () => publishWindowState(window))
+  window.on('leave-full-screen', () => publishWindowState(window))
+  window.on('focus', () => publishWindowState(window))
+  window.on('blur', () => publishWindowState(window))
+  window.webContents.on('did-finish-load', () => publishWindowState(window))
+}
+
 function createWindow(): void {
-  // 创建浏览器窗口
-  const mainWindow = new BrowserWindow({
+  const windowOptions: BrowserWindowConstructorOptions = {
     width: 900,
     height: 670,
     show: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      // 仅限 Windows
-      color: '#1e1e1e', // 按钮背景色，建议匹配你网页的背景色
-      symbolColor: '#74b1be', // 按钮图标颜色（那个 X 和 - 的颜色）
-      height: 35 // 按钮区的高度，也是可拖动区域的高度
-    },
+    ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: getOverlayTheme() } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     }
-  })
+  }
+
+  const mainWindow = new BrowserWindow(windowOptions)
+
+  registerWindowStateBridge(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -42,6 +88,13 @@ function createWindow(): void {
   }
 }
 
+nativeTheme.on('updated', () => {
+  if (!SUPPORTS_TITLEBAR_OVERLAY) return
+
+  const allWindows = BrowserWindow.getAllWindows()
+  allWindows.forEach((win) => updateTitleBarTheme(win))
+})
+
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
 // 某些 API 只能在此事件发生后使用
 app.whenReady().then(() => {
@@ -58,6 +111,19 @@ app.whenReady().then(() => {
   // IPC 测试
   ipcMain.on('ping', () => console.log('pong'))
 
+  ipcMain.handle('titlebar:get-state', (event) => {
+    const targetWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!targetWindow) {
+      return {
+        isMaximized: false,
+        isFullScreen: false,
+        isFocused: false
+      } satisfies TitleBarWindowState
+    }
+
+    return getWindowState(targetWindow)
+  })
+
   createWindow()
 
   app.on('activate', function () {
@@ -71,7 +137,7 @@ app.whenReady().then(() => {
 // 在 macOS 上，应用程序及其菜单栏通常保持活动状态
 // 直到用户使用 Cmd + Q 显式退出
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (!IS_MAC) {
     app.quit()
   }
 })
