@@ -11,22 +11,48 @@ type TitleBarWindowState = {
 }
 
 type ThemePreference = 'auto' | 'light' | 'dark'
+type ResolvedTheme = Exclude<ThemePreference, 'auto'>
+type OverlayThemePalette = {
+  activeColor: string
+  inactiveColor: string
+  activeSymbolColor: string
+  inactiveSymbolColor: string
+  height: number
+}
 
 const IS_MAC = process.platform === 'darwin'
 const SUPPORTS_TITLEBAR_OVERLAY = process.platform === 'win32' || process.platform === 'linux'
 
 const OVERLAY_THEMES = {
-  dark: { color: '#171615', symbolColor: '#eef2e8', height: 36 },
-  light: { color: '#f6f8f2', symbolColor: '#23211f', height: 36 }
-}
+  dark: {
+    activeColor: '#1e1d1b',
+    inactiveColor: '#171615',
+    activeSymbolColor: '#eeebe6',
+    inactiveSymbolColor: '#ada79d',
+    height: 36
+  },
+  light: {
+    activeColor: '#f5f4f0',
+    inactiveColor: '#efece6',
+    activeSymbolColor: '#23211f',
+    inactiveSymbolColor: '#5d5952',
+    height: 36
+  }
+} satisfies Record<ResolvedTheme, OverlayThemePalette>
 
 let themePreference: ThemePreference = 'auto'
 
-function resolveOverlayTheme(preference: ThemePreference): TitleBarOverlay {
-  const resolvedTheme =
+function resolveOverlayTheme(preference: ThemePreference, isFocused = true): TitleBarOverlay {
+  const resolvedTheme: ResolvedTheme =
     preference === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : preference
 
-  return OVERLAY_THEMES[resolvedTheme]
+  const palette = OVERLAY_THEMES[resolvedTheme]
+
+  return {
+    color: isFocused ? palette.activeColor : palette.inactiveColor,
+    symbolColor: isFocused ? palette.activeSymbolColor : palette.inactiveSymbolColor,
+    height: palette.height
+  }
 }
 
 function isThemePreference(value: unknown): value is ThemePreference {
@@ -48,7 +74,7 @@ function publishWindowState(window: BrowserWindow): void {
 
 function updateTitleBarTheme(window: BrowserWindow): void {
   if (!SUPPORTS_TITLEBAR_OVERLAY || window.isDestroyed()) return
-  window.setTitleBarOverlay(resolveOverlayTheme(themePreference))
+  window.setTitleBarOverlay(resolveOverlayTheme(themePreference, window.isFocused()))
 }
 
 function updateAllTitleBarThemes(): void {
@@ -63,9 +89,18 @@ function registerWindowStateBridge(window: BrowserWindow): void {
   window.on('unmaximize', () => publishWindowState(window))
   window.on('enter-full-screen', () => publishWindowState(window))
   window.on('leave-full-screen', () => publishWindowState(window))
-  window.on('focus', () => publishWindowState(window))
-  window.on('blur', () => publishWindowState(window))
-  window.webContents.on('did-finish-load', () => publishWindowState(window))
+  window.on('focus', () => {
+    updateTitleBarTheme(window)
+    publishWindowState(window)
+  })
+  window.on('blur', () => {
+    updateTitleBarTheme(window)
+    publishWindowState(window)
+  })
+  window.webContents.on('did-finish-load', () => {
+    updateTitleBarTheme(window)
+    publishWindowState(window)
+  })
 }
 
 function createWindow(): void {

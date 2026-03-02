@@ -44,8 +44,7 @@ body {
   left: 0;
   width: 100%;
   height: env(titlebar-area-height, var(--tb-height));
-  border-bottom: 1px solid rgb(var(--ui-border));
-  background: rgb(var(--ui-titlebar) / 0.92);
+  background: rgb(var(--ui-titlebar));
   backdrop-filter: blur(12px);
   z-index: 1000;
   user-select: none;
@@ -54,7 +53,7 @@ body {
 }
 
 .app-shell.is-blurred .immersive-titlebar {
-  background: rgb(var(--ui-titlebar-inactive) / 0.92);
+  background: rgb(var(--ui-titlebar-inactive));
 }
 
 .tb-content {
@@ -69,8 +68,8 @@ body {
   padding: 0 12px;
 }
 
-.tb-no-drag,
-.tb-no-drag * {
+.tb-control,
+.tb-control * {
   -webkit-app-region: no-drag;
 }
 

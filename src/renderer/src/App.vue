@@ -75,17 +75,17 @@ onBeforeUnmount(() => {
   <div class="app-shell" :class="shellClasses">
     <header class="immersive-titlebar">
       <div class="tb-content">
-        <div class="tb-left tb-no-drag">
+        <div class="tb-left">
           <span aria-hidden="true" class="tb-logo-dot"></span>
           <span class="tb-workspace">TransCraft Workspace</span>
         </div>
 
         <div class="tb-center">
-          <nav class="tb-tabs tb-no-drag" aria-label="Primary tabs" role="tablist">
+          <nav class="tb-tabs" aria-label="Primary tabs" role="tablist">
             <button
               v-for="tab in tabs"
               :key="tab.id"
-              class="tb-tab"
+              class="tb-tab tb-control"
               :class="{ 'is-active': activeTab === tab.id }"
               role="tab"
               type="button"
@@ -97,8 +97,8 @@ onBeforeUnmount(() => {
           </nav>
         </div>
 
-        <div class="tb-right tb-no-drag">
-          <ThemeSwitcher />
+        <div class="tb-right">
+          <ThemeSwitcher class="tb-control" />
           <div aria-hidden="true" class="tb-window-controls-spacer"></div>
         </div>
       </div>
