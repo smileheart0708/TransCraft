@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import BaseDropdown from '@renderer/components/ui/BaseDropdown.vue'
+import BaseDropdown from '@renderer/components/common/BaseDropdown.vue'
 import { useTheme, type ThemePreference } from '@renderer/composables/useTheme'
 
 const LONG_PRESS_DURATION = 450
