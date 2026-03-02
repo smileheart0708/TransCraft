@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { Sun, Moon, MonitorCog } from 'lucide-vue-next'
 import BaseDropdown from '@renderer/components/common/BaseDropdown.vue'
 import { useTheme, type ThemePreference } from '@renderer/composables/useTheme'
 
@@ -17,13 +18,21 @@ const themeLabelMap: Record<ThemePreference, string> = {
   dark: 'Dark'
 }
 
-const { themePreference, resolvedTheme, setThemePreference, cycleThemePreference } = useTheme()
+const { themePreference, setThemePreference, cycleThemePreference } = useTheme()
 
 const isDropdownOpen = ref(false)
 const longPressTriggered = ref(false)
 const longPressTimer = ref<number | null>(null)
 
 const currentThemeLabel = computed(() => themeLabelMap[themePreference.value])
+
+const themeIconMap = {
+  auto: MonitorCog,
+  light: Sun,
+  dark: Moon
+} as const
+
+const currentThemeIcon = computed(() => themeIconMap[themePreference.value])
 
 function isThemePreference(value: string): value is ThemePreference {
   return value === 'auto' || value === 'light' || value === 'dark'
@@ -124,9 +133,7 @@ onBeforeUnmount(() => {
         @click="handleButtonClick"
         @keydown="handleButtonKeydown"
       >
-        <span class="theme-switcher__dot" :class="`is-${resolvedTheme}`" aria-hidden="true"></span>
-        <span class="theme-switcher__label">{{ currentThemeLabel }}</span>
-        <span class="theme-switcher__chevron" aria-hidden="true">▾</span>
+        <component :is="currentThemeIcon" :size="16" :stroke-width="2" aria-hidden="true" />
       </button>
     </template>
   </BaseDropdown>
@@ -136,16 +143,14 @@ onBeforeUnmount(() => {
 .theme-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border-radius: 999px;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   border: 1px solid rgb(var(--ui-border));
   background: rgb(var(--ui-surface));
   color: rgb(var(--ui-text));
-  height: 30px;
-  padding: 0 12px 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+  padding: 0;
 }
 
 .theme-switcher:hover {
@@ -155,29 +160,5 @@ onBeforeUnmount(() => {
 .theme-switcher.is-open {
   border-color: rgb(var(--ui-brand));
   color: rgb(var(--ui-brand-emphasis));
-}
-
-.theme-switcher__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  border: 1px solid rgb(var(--ui-border));
-}
-
-.theme-switcher__dot.is-light {
-  background: rgb(var(--neutral-50));
-}
-
-.theme-switcher__dot.is-dark {
-  background: rgb(var(--neutral-900));
-}
-
-.theme-switcher__label {
-  letter-spacing: 0.01em;
-}
-
-.theme-switcher__chevron {
-  font-size: 10px;
-  color: rgb(var(--ui-text-muted));
 }
 </style>
