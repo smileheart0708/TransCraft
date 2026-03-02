@@ -18,8 +18,15 @@ type TitleBarAPI = {
   getPlatform: () => DesktopPlatform
 }
 
+type ThemePreference = 'auto' | 'light' | 'dark'
+
+type ThemeAPI = {
+  setPreference: (preference: ThemePreference) => Promise<void>
+}
+
 type RendererAPI = {
   titleBar: TitleBarAPI
+  theme: ThemeAPI
 }
 
 function getPlatform(): DesktopPlatform {
@@ -48,6 +55,10 @@ const api: RendererAPI = {
       }
     },
     getPlatform
+  },
+  theme: {
+    setPreference: (preference) =>
+      ipcRenderer.invoke('theme:set-preference', preference) as Promise<void>
   }
 }
 

@@ -15,8 +15,15 @@ declare global {
     getPlatform: () => DesktopPlatform
   }
 
+  type ThemePreference = 'auto' | 'light' | 'dark'
+
+  interface ThemeAPI {
+    setPreference: (preference: ThemePreference) => Promise<void>
+  }
+
   interface RendererAPI {
     titleBar: TitleBarAPI
+    theme: ThemeAPI
   }
 
   interface Window {

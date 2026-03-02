@@ -10,17 +10,27 @@ type TitleBarWindowState = {
   isFocused: boolean
 }
 
+type ThemePreference = 'auto' | 'light' | 'dark'
+
 const IS_MAC = process.platform === 'darwin'
 const SUPPORTS_TITLEBAR_OVERLAY = process.platform === 'win32' || process.platform === 'linux'
 
-const THEMES = {
-  dark: { color: '#1e1e1e', symbolColor: '#ffffff', height: 36 },
-  light: { color: '#ffffff', symbolColor: '#000000', height: 36 }
+const OVERLAY_THEMES = {
+  dark: { color: '#171615', symbolColor: '#eef2e8', height: 36 },
+  light: { color: '#f6f8f2', symbolColor: '#23211f', height: 36 }
 }
 
-function getOverlayTheme(): TitleBarOverlay {
-  const isDark = nativeTheme.shouldUseDarkColors
-  return isDark ? THEMES.dark : THEMES.light
+let themePreference: ThemePreference = 'auto'
+
+function resolveOverlayTheme(preference: ThemePreference): TitleBarOverlay {
+  const resolvedTheme =
+    preference === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : preference
+
+  return OVERLAY_THEMES[resolvedTheme]
+}
+
+function isThemePreference(value: unknown): value is ThemePreference {
+  return value === 'auto' || value === 'light' || value === 'dark'
 }
 
 function getWindowState(window: BrowserWindow): TitleBarWindowState {
@@ -38,7 +48,14 @@ function publishWindowState(window: BrowserWindow): void {
 
 function updateTitleBarTheme(window: BrowserWindow): void {
   if (!SUPPORTS_TITLEBAR_OVERLAY || window.isDestroyed()) return
-  window.setTitleBarOverlay(getOverlayTheme())
+  window.setTitleBarOverlay(resolveOverlayTheme(themePreference))
+}
+
+function updateAllTitleBarThemes(): void {
+  if (!SUPPORTS_TITLEBAR_OVERLAY) return
+
+  const allWindows = BrowserWindow.getAllWindows()
+  allWindows.forEach((win) => updateTitleBarTheme(win))
 }
 
 function registerWindowStateBridge(window: BrowserWindow): void {
@@ -58,7 +75,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
-    ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: getOverlayTheme() } : {}),
+    ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: resolveOverlayTheme(themePreference) } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -89,10 +106,8 @@ function createWindow(): void {
 }
 
 nativeTheme.on('updated', () => {
-  if (!SUPPORTS_TITLEBAR_OVERLAY) return
-
-  const allWindows = BrowserWindow.getAllWindows()
-  allWindows.forEach((win) => updateTitleBarTheme(win))
+  if (themePreference !== 'auto') return
+  updateAllTitleBarThemes()
 })
 
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
@@ -108,9 +123,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC 测试
-  ipcMain.on('ping', () => console.log('pong'))
-
   ipcMain.handle('titlebar:get-state', (event) => {
     const targetWindow = BrowserWindow.fromWebContents(event.sender)
     if (!targetWindow) {
@@ -122,6 +134,12 @@ app.whenReady().then(() => {
     }
 
     return getWindowState(targetWindow)
+  })
+
+  ipcMain.handle('theme:set-preference', (_event, preference: unknown) => {
+    if (!isThemePreference(preference)) return
+    themePreference = preference
+    updateAllTitleBarThemes()
   })
 
   createWindow()

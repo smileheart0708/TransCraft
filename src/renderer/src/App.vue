@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import AppVersions from './components/AppVersions.vue'
+import ThemeSwitcher from '@renderer/components/common/ThemeSwitcher.vue'
 
 const tabs = [
   { id: 'workspace', label: 'Workspace' },
@@ -39,8 +39,6 @@ const setActiveTab = (tabId: TabId): void => {
   activeTab.value = tabId
 }
 
-const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
-
 const overlay = (navigator as Navigator & { windowControlsOverlay?: WindowControlsOverlayLike })
   .windowControlsOverlay
 
@@ -78,7 +76,7 @@ onBeforeUnmount(() => {
     <header class="immersive-titlebar">
       <div class="tb-content">
         <div class="tb-left tb-no-drag">
-          <img alt="logo" class="tb-logo" src="./assets/electron.svg" />
+          <span aria-hidden="true" class="tb-logo-dot"></span>
           <span class="tb-workspace">TransCraft Workspace</span>
         </div>
 
@@ -91,6 +89,7 @@ onBeforeUnmount(() => {
               :class="{ 'is-active': activeTab === tab.id }"
               role="tab"
               type="button"
+              :aria-selected="activeTab === tab.id"
               @click="setActiveTab(tab.id)"
             >
               {{ tab.label }}
@@ -98,31 +97,21 @@ onBeforeUnmount(() => {
           </nav>
         </div>
 
-        <div class="tb-right">
+        <div class="tb-right tb-no-drag">
+          <ThemeSwitcher />
           <div aria-hidden="true" class="tb-window-controls-spacer"></div>
         </div>
       </div>
     </header>
 
     <main class="app-main">
-      <img alt="logo" class="logo" src="./assets/electron.svg" />
-      <div class="creator">Powered by electron-vite</div>
-      <div class="text">
-        Build an Electron app with
-        <span class="vue">Vue</span>
-        and
-        <span class="ts">TypeScript</span>
-      </div>
-      <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-      <div class="actions">
-        <div class="action">
-          <a href="https://electron-vite.org/" rel="noreferrer" target="_blank">Documentation</a>
-        </div>
-        <div class="action">
-          <a rel="noreferrer" target="_blank" @click="ipcHandle">发送 IPC</a>
-        </div>
-      </div>
-      <AppVersions />
+      <section class="workspace-intro">
+        <p class="workspace-kicker">Workspace</p>
+        <h1 class="workspace-title">TransCraft</h1>
+        <p class="workspace-description">
+          基础设施已完成：主题令牌、全局深浅色切换、标题栏同步与可复用组件均已就绪。
+        </p>
+      </section>
     </main>
   </div>
 </template>
