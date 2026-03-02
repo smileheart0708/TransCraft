@@ -24,9 +24,14 @@ type ThemeAPI = {
   setPreference: (preference: ThemePreference) => Promise<void>
 }
 
+type UpdaterAPI = {
+  checkForUpdates: () => Promise<void>
+}
+
 type RendererAPI = {
   titleBar: TitleBarAPI
   theme: ThemeAPI
+  updater: UpdaterAPI
 }
 
 function getPlatform(): DesktopPlatform {
@@ -59,6 +64,9 @@ const api: RendererAPI = {
   theme: {
     setPreference: (preference) =>
       ipcRenderer.invoke('theme:set-preference', preference) as Promise<void>
+  },
+  updater: {
+    checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates') as Promise<void>
   }
 }
 

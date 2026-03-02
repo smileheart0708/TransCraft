@@ -1,48 +1,101 @@
-appId: com.electron.app
+# 应用唯一标识符，建议使用反向域名格式（如 com.yourcompany.appname）
+appId: cqxx.transcraft.app
+
+# 应用产品名称，显示在安装程序和应用标题栏中
 productName: transcraft
+
+# 构建资源目录配置
 directories:
+  # 构建资源文件夹路径，存放图标、安装程序资源等
   buildResources: build
+
+# 打包时包含的文件规则（! 开头表示排除）
 files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!**/.vscode/*'  # 排除 VSCode 配置文件
+  - '!src/*'  # 排除源代码目录（已编译到 out 目录）
+  - '!electron.vite.config.{js,ts,mjs,cjs}'  # 排除 Vite 配置文件
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'  # 排除开发工具配置和文档
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'  # 排除环境变量和包管理器文件
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'  # 排除 TypeScript 配置文件
+
+# 不打包进 asar 归档的文件（需要以原始文件形式访问）
 asarUnpack:
-  - resources/**
+  - resources/**  # resources 目录下的所有文件保持原始文件结构
+
+# Windows 平台配置
 win:
+  # Windows 可执行文件名称
   executableName: transcraft
+
+# NSIS 安装程序配置（Windows）
 nsis:
+  # 是否使用一键安装模式（false 表示显示安装向导）
   oneClick: false
+  # 是否允许用户选择安装目录
   allowToChangeInstallationDirectory: true
+  # 安装包文件名格式
   artifactName: ${name}-${version}-setup.${ext}
+  # 开始菜单快捷方式名称
   shortcutName: ${productName}
+  # 卸载程序显示名称
   uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  # 是否创建桌面快捷方式（true: 让用户选择，always: 强制创建，false: 不创建）
+  createDesktopShortcut: true
+  # 卸载时是否删除用户数据（AppData 目录）
   deleteAppDataOnUninstall: true
+
+# macOS 平台配置
 mac:
+  # 继承的权限配置文件路径（用于沙盒和权限声明）
   entitlementsInherit: build/entitlements.mac.plist
+  # 扩展 Info.plist 配置
   extendInfo:
+    # 摄像头访问权限说明
     - NSCameraUsageDescription: Application requests access to the device's camera.
+    # 麦克风访问权限说明
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    # 文档文件夹访问权限说明
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    # 下载文件夹访问权限说明
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  # 是否进行公证（需要 Apple 开发者账号）
   notarize: false
+
+# macOS DMG 安装包配置
 dmg:
+  # DMG 文件名格式
   artifactName: ${name}-${version}.${ext}
+
+# Linux 平台配置
 linux:
+  # 构建目标格式
   target:
-    - AppImage
-    - snap
-    - deb
+    - AppImage  # 便携式应用镜像
+    - snap      # Snap 包
+    - deb       # Debian/Ubuntu 安装包
+  # 维护者信息
   maintainer: electronjs.org
+  # 应用分类
   category: Utility
+
+# AppImage 配置
 appImage:
+  # AppImage 文件名格式
   artifactName: ${name}-${version}.${ext}
+
+# 是否在安装后重新构建原生模块（false 可加快构建速度）
 npmRebuild: false
+
+# 自动更新发布配置（使用 GitHub Releases）
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  # 发布提供商类型（github: 使用 GitHub Releases）
+  provider: github
+  # GitHub 仓库所有者（替换为你的 GitHub 用户名或组织名）
+  owner: smileheart0708
+  # GitHub 仓库名称（替换为你的仓库名）
+  repo: TransCraft
+
+# Electron 下载配置
 electronDownload:
+  # 使用国内镜像加速下载
   mirror: https://npmmirror.com/mirrors/electron/

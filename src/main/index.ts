@@ -3,6 +3,7 @@ import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { setupAutoUpdater, checkForUpdates } from './updater'
 
 type TitleBarWindowState = {
   isMaximized: boolean
@@ -177,7 +178,15 @@ app.whenReady().then(() => {
     updateAllTitleBarThemes()
   })
 
+  // 注册手动检查更新的 IPC 处理器
+  ipcMain.handle('updater:check-for-updates', () => {
+    checkForUpdates()
+  })
+
   createWindow()
+
+  // 启动自动更新检查
+  setupAutoUpdater()
 
   app.on('activate', function () {
     // 在 macOS 上，当点击 dock 图标且没有其他窗口打开时

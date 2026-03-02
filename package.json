@@ -1,6 +1,6 @@
 {
   "name": "transcraft",
-  "version": "0.0.1-alpha",
+  "version": "0.0.1-beta",
   "description": "An Electron application with Vue and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",

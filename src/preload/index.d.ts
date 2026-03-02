@@ -21,9 +21,14 @@ declare global {
     setPreference: (preference: ThemePreference) => Promise<void>
   }
 
+  interface UpdaterAPI {
+    checkForUpdates: () => Promise<void>
+  }
+
   interface RendererAPI {
     titleBar: TitleBarAPI
     theme: ThemeAPI
+    updater: UpdaterAPI
   }
 
   interface Window {
