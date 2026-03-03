@@ -17,10 +17,14 @@ const canEdit = computed(() => Boolean(activeTab.value && !activeTab.value.isBin
 const hasOpenTabs = computed(() => workspaceStore.openTabs.length > 0)
 
 function ensureEditorMounted(): void {
-  if (!canEdit.value || !editorHostRef.value) {
+  if (!canEdit.value) {
     editorService?.destroy()
     editorService = null
     mountedEditorPath = null
+    return
+  }
+
+  if (!editorHostRef.value) {
     return
   }
 
@@ -51,6 +55,9 @@ watch(
   () => activeTab.value?.relativePath,
   () => {
     ensureEditorMounted()
+  },
+  {
+    flush: 'post'
   }
 )
 
