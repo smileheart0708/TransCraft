@@ -19,48 +19,18 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="workspace-view">
+  <section
+    class="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-2.5 overflow-hidden p-3"
+  >
     <WorkspaceToolbar />
     <WorkspaceTabs />
 
-    <section class="workspace-view__content">
-      <WorkspaceTree />
-      <WorkspaceEditorPane v-if="workspaceStore.hasWorkspace" />
-      <WorkspaceEmptyState v-else />
+    <section
+      class="grid min-h-0 grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-2.5 overflow-hidden max-[960px]:grid-cols-1"
+    >
+      <WorkspaceTree class="min-h-0 max-[960px]:min-h-60" />
+      <WorkspaceEditorPane v-if="workspaceStore.hasWorkspace" class="min-h-0" />
+      <WorkspaceEmptyState v-else class="min-h-0" />
     </section>
   </section>
 </template>
-
-<style scoped>
-.workspace-view {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 10px;
-  padding: 12px;
-  overflow: hidden;
-}
-
-.workspace-view__content {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-  gap: 10px;
-  overflow: hidden;
-}
-
-.workspace-view__content > * {
-  min-height: 0;
-}
-
-@media (max-width: 960px) {
-  .workspace-view__content {
-    grid-template-columns: 1fr;
-  }
-
-  .workspace-view__content > :first-child {
-    min-height: 240px;
-  }
-}
-</style>

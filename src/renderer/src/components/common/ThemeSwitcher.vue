@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { Sun, Moon, MonitorCog } from 'lucide-vue-next'
-import BaseDropdown from '@renderer/components/common/BaseDropdown.vue'
+import UiDropdown from '@renderer/components/ui/UiDropdown.vue'
+import UiIconButton from '@renderer/components/ui/UiIconButton.vue'
 import { useTheme, type ThemePreference } from '@renderer/composables/useTheme'
 
 const LONG_PRESS_DURATION = 450
@@ -109,7 +110,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <BaseDropdown
+  <UiDropdown
     :items="themeItems"
     :model-value="themePreference"
     :open="isDropdownOpen"
@@ -118,10 +119,10 @@ onBeforeUnmount(() => {
     @update:open="setDropdownOpen"
   >
     <template #trigger="{ open }">
-      <button
-        type="button"
-        class="theme-switcher"
-        :class="{ 'is-open': open }"
+      <UiIconButton
+        variant="surface"
+        size="sm"
+        :active="open"
         :aria-label="`Theme mode ${currentThemeLabel}. Click to cycle, long press for quick selection.`"
         :aria-pressed="themePreference !== 'system'"
         aria-haspopup="menu"
@@ -134,31 +135,7 @@ onBeforeUnmount(() => {
         @keydown="handleButtonKeydown"
       >
         <component :is="currentThemeIcon" :size="16" :stroke-width="2" aria-hidden="true" />
-      </button>
+      </UiIconButton>
     </template>
-  </BaseDropdown>
+  </UiDropdown>
 </template>
-
-<style scoped>
-.theme-switcher {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 1px solid rgb(var(--ui-border));
-  background: rgb(var(--ui-surface));
-  color: rgb(var(--ui-text));
-  padding: 0;
-}
-
-.theme-switcher:hover {
-  border-color: rgb(var(--ui-brand));
-}
-
-.theme-switcher.is-open {
-  border-color: rgb(var(--ui-brand));
-  color: rgb(var(--ui-brand-emphasis));
-}
-</style>

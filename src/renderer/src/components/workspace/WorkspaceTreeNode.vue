@@ -11,6 +11,7 @@ import {
   Trash2,
   FilePlus2
 } from 'lucide-vue-next'
+import UiIconButton from '@renderer/components/ui/UiIconButton.vue'
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
 import type { WorkspaceEntryKind, WorkspaceNodeDTO } from '../../types/workspace'
 
@@ -34,6 +35,9 @@ const isLoading = computed(() => workspaceStore.isParentLoading(props.node.relat
 const isSelected = computed(() => workspaceStore.selectedPath === props.node.relativePath)
 const rowIndent = computed(() => ({
   '--node-depth': `${props.depth}`
+}))
+const hintIndent = computed(() => ({
+  paddingLeft: `calc((${props.depth} + 1) * 14px + 22px)`
 }))
 
 function handleNodeClick(): void {
@@ -82,56 +86,78 @@ function revealNode(): void {
 </script>
 
 <template>
-  <li class="workspace-tree-node">
+  <li class="list-none">
     <div
-      class="workspace-tree-node__row"
+      class="group grid min-h-7.5 grid-cols-[14px_16px_minmax(0,1fr)_auto] items-center gap-1.5 rounded-lg border border-transparent px-1.5 py-0.75 hover:border-border hover:bg-surface-muted"
       :class="{
-        'is-directory': isDirectory,
-        'is-selected': isSelected
+        'border-brand bg-surface-muted': isSelected
       }"
-      :style="rowIndent"
+      :style="[rowIndent, { marginLeft: 'calc(var(--node-depth) * 14px)' }]"
       :title="node.relativePath"
       @click="handleNodeClick"
     >
-      <span class="workspace-tree-node__caret" :class="{ 'is-expanded': isExpanded }">
-        <ChevronRight v-if="isDirectory" :size="12" aria-hidden="true" />
+      <span class="inline-flex h-3.5 w-3.5 items-center justify-center text-text-muted">
+        <ChevronRight
+          v-if="isDirectory"
+          :size="12"
+          aria-hidden="true"
+          :class="isExpanded ? 'rotate-90' : ''"
+        />
       </span>
 
-      <span class="workspace-tree-node__icon" aria-hidden="true">
+      <span class="inline-flex items-center text-text-muted" aria-hidden="true">
         <FolderOpen v-if="isDirectory && isExpanded" :size="14" />
         <Folder v-else-if="isDirectory" :size="14" />
         <FileText v-else :size="14" />
       </span>
 
-      <span class="workspace-tree-node__label">{{ node.name }}</span>
+      <span class="ellipsis text-xs text-text">{{ node.name }}</span>
 
-      <span class="workspace-tree-node__actions">
-        <button type="button" title="系统中显示" @click.stop="revealNode">
+      <span
+        class="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+        :class="isSelected ? 'opacity-100' : ''"
+      >
+        <UiIconButton variant="surface" size="xs" title="系统中显示" @click.stop="revealNode">
           <FolderSearch :size="12" aria-hidden="true" />
-        </button>
-        <button v-if="isDirectory" type="button" title="新建文件" @click.stop="createChild('file')">
-          <FilePlus2 :size="12" aria-hidden="true" />
-        </button>
-        <button
+        </UiIconButton>
+        <UiIconButton
           v-if="isDirectory"
-          type="button"
+          variant="surface"
+          size="xs"
+          title="新建文件"
+          @click.stop="createChild('file')"
+        >
+          <FilePlus2 :size="12" aria-hidden="true" />
+        </UiIconButton>
+        <UiIconButton
+          v-if="isDirectory"
+          variant="surface"
+          size="xs"
           title="新建文件夹"
           @click.stop="createChild('directory')"
         >
           <FolderPlus :size="12" aria-hidden="true" />
-        </button>
-        <button type="button" title="重命名" @click.stop="renameNode">
+        </UiIconButton>
+        <UiIconButton variant="surface" size="xs" title="重命名" @click.stop="renameNode">
           <Pencil :size="12" aria-hidden="true" />
-        </button>
-        <button type="button" title="删除" @click.stop="deleteNode">
+        </UiIconButton>
+        <UiIconButton variant="surface" size="xs" title="删除" @click.stop="deleteNode">
           <Trash2 :size="12" aria-hidden="true" />
-        </button>
+        </UiIconButton>
       </span>
     </div>
 
-    <ul v-if="isDirectory && isExpanded" class="workspace-tree-node__children">
-      <li v-if="isLoading" class="workspace-tree-node__hint">加载中...</li>
-      <li v-else-if="children.length === 0" class="workspace-tree-node__hint">空目录</li>
+    <ul v-if="isDirectory && isExpanded" class="m-0 grid gap-0.5 p-0">
+      <li v-if="isLoading" class="hint-text list-none px-1.5 py-1" :style="hintIndent">
+        加载中...
+      </li>
+      <li
+        v-else-if="children.length === 0"
+        class="hint-text list-none px-1.5 py-1"
+        :style="hintIndent"
+      >
+        空目录
+      </li>
 
       <WorkspaceTreeNode
         v-for="child in children"
@@ -143,106 +169,3 @@ function revealNode(): void {
     </ul>
   </li>
 </template>
-
-<style scoped>
-.workspace-tree-node {
-  list-style: none;
-}
-
-.workspace-tree-node__row {
-  --indent-size: 14px;
-  display: grid;
-  grid-template-columns: 14px 16px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 3px 6px;
-  margin-left: calc(var(--node-depth) * var(--indent-size));
-}
-
-.workspace-tree-node__row:hover {
-  border-color: rgb(var(--ui-border));
-  background: rgb(var(--ui-surface-muted));
-}
-
-.workspace-tree-node__row.is-selected {
-  border-color: rgb(var(--ui-brand));
-  background: rgb(var(--ui-surface-muted));
-}
-
-.workspace-tree-node__caret {
-  width: 14px;
-  height: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: rgb(var(--ui-text-muted));
-}
-
-.workspace-tree-node__caret.is-expanded {
-  transform: rotate(90deg);
-}
-
-.workspace-tree-node__icon {
-  color: rgb(var(--ui-text-muted));
-  display: inline-flex;
-  align-items: center;
-}
-
-.workspace-tree-node__label {
-  min-width: 0;
-  font-size: 12px;
-  color: rgb(var(--ui-text));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.workspace-tree-node__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.workspace-tree-node__row:hover .workspace-tree-node__actions,
-.workspace-tree-node__row.is-selected .workspace-tree-node__actions {
-  opacity: 1;
-}
-
-.workspace-tree-node__actions button {
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 6px;
-  background: rgb(var(--ui-surface));
-  color: rgb(var(--ui-text-muted));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-}
-
-.workspace-tree-node__actions button:hover {
-  color: rgb(var(--ui-text));
-  border-color: rgb(var(--ui-brand));
-}
-
-.workspace-tree-node__children {
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.workspace-tree-node__hint {
-  list-style: none;
-  margin: 0;
-  font-size: 12px;
-  color: rgb(var(--ui-text-muted));
-  padding: 4px 6px 4px calc((var(--node-depth) + 1) * 14px + 22px);
-}
-</style>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { FileWarning } from 'lucide-vue-next'
+import UiPanel from '@renderer/components/ui/UiPanel.vue'
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
 import { CodeEditorService } from '../../services/workspace/codeEditorService'
 
@@ -71,107 +72,31 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="workspace-editor">
-    <div v-if="!activeTab" class="workspace-editor__placeholder">
-      <p>从左侧文件树中选择一个文件开始预览与编辑。</p>
+  <UiPanel as="section" full-height class="min-w-0 overflow-hidden">
+    <div
+      v-if="!activeTab"
+      class="grid h-full place-content-center justify-items-center gap-2 p-6 text-center text-text-muted"
+    >
+      <p class="m-0">从左侧文件树中选择一个文件开始预览与编辑。</p>
     </div>
 
-    <div v-else-if="activeTab.isBinary" class="workspace-editor__binary">
+    <div
+      v-else-if="activeTab.isBinary"
+      class="grid h-full place-content-center justify-items-center gap-2 p-6 text-center text-text-muted"
+    >
       <FileWarning :size="18" aria-hidden="true" />
-      <p class="workspace-editor__binary-title">Binary file is not editable</p>
-      <p class="workspace-editor__binary-message">{{ activeTab.binaryMessage }}</p>
+      <p class="m-0 text-sm font-semibold text-text">Binary file is not editable</p>
+      <p class="m-0 max-w-[46ch] text-xs">{{ activeTab.binaryMessage }}</p>
     </div>
 
-    <div v-else class="workspace-editor__surface">
-      <div ref="editorHostRef" class="workspace-editor__host"></div>
-      <footer class="workspace-editor__statusbar">
-        <span class="workspace-editor__path">{{ activeTab.relativePath }}</span>
-        <span class="workspace-editor__dirty" :class="{ 'is-visible': activeTab.isDirty }"
+    <div v-else class="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto]">
+      <div ref="editorHostRef" class="h-full min-h-0 overflow-hidden"></div>
+      <footer class="statusbar">
+        <span class="ellipsis">{{ activeTab.relativePath }}</span>
+        <span :class="activeTab.isDirty ? 'visible font-semibold text-brand-emphasis' : 'invisible'"
           >● 未保存</span
         >
       </footer>
     </div>
-  </section>
+  </UiPanel>
 </template>
-
-<style scoped>
-.workspace-editor {
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 12px;
-  background: rgb(var(--ui-surface));
-  overflow: hidden;
-}
-
-.workspace-editor__placeholder,
-.workspace-editor__binary {
-  height: 100%;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 8px;
-  padding: 24px;
-  color: rgb(var(--ui-text-muted));
-  text-align: center;
-}
-
-.workspace-editor__placeholder p,
-.workspace-editor__binary p {
-  margin: 0;
-}
-
-.workspace-editor__binary-title {
-  font-size: 14px;
-  color: rgb(var(--ui-text));
-  font-weight: 600;
-}
-
-.workspace-editor__binary-message {
-  max-width: 46ch;
-  font-size: 12px;
-}
-
-.workspace-editor__surface {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: 1fr auto;
-}
-
-.workspace-editor__host {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.workspace-editor__statusbar {
-  border-top: 1px solid rgb(var(--ui-border));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 10px;
-  font-size: 11px;
-  color: rgb(var(--ui-text-muted));
-  background: rgb(var(--ui-surface-muted));
-}
-
-.workspace-editor__path {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workspace-editor__dirty {
-  visibility: hidden;
-  color: rgb(var(--ui-brand-emphasis));
-  font-weight: 600;
-}
-
-.workspace-editor__dirty.is-visible {
-  visibility: visible;
-}
-</style>

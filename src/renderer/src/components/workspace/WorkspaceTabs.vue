@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Plus, Save, X } from 'lucide-vue-next'
+import UiButton from '@renderer/components/ui/UiButton.vue'
+import UiIconButton from '@renderer/components/ui/UiIconButton.vue'
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
 import { getParentPath } from '../../types/workspace'
 import type { WorkspaceEntryKind } from '../../types/workspace'
@@ -83,24 +85,37 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section ref="rootRef" class="workspace-tabs">
-    <div class="workspace-tabs__left">
-      <button
-        type="button"
-        class="workspace-tabs__plus"
-        :class="{ 'is-open': menuOpen }"
+  <section
+    ref="rootRef"
+    class="panel relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 py-1.75 max-[760px]:grid-cols-1"
+  >
+    <div class="relative flex min-w-0 items-center gap-2">
+      <UiIconButton
+        variant="soft"
+        size="sm"
+        :active="menuOpen"
         aria-label="Tab actions"
         @click="menuOpen = !menuOpen"
       >
         <Plus :size="14" aria-hidden="true" />
-      </button>
+      </UiIconButton>
 
-      <div v-if="menuOpen" class="workspace-tabs__menu" role="menu">
-        <button type="button" role="menuitem" @click="handleCommand('open-workspace')">
+      <div
+        v-if="menuOpen"
+        class="menu-surface absolute left-0 top-[calc(100%+8px)] z-10 grid min-w-40 gap-1 p-1.5"
+        role="menu"
+      >
+        <button
+          type="button"
+          class="menu-item w-full px-2 py-1.75 text-left text-xs font-semibold"
+          role="menuitem"
+          @click="handleCommand('open-workspace')"
+        >
           打开工作区
         </button>
         <button
           type="button"
+          class="menu-item w-full px-2 py-1.75 text-left text-xs font-semibold"
           role="menuitem"
           :disabled="!workspaceStore.hasWorkspace"
           @click="handleCommand('new-file')"
@@ -109,6 +124,7 @@ onBeforeUnmount(() => {
         </button>
         <button
           type="button"
+          class="menu-item w-full px-2 py-1.75 text-left text-xs font-semibold"
           role="menuitem"
           :disabled="!workspaceStore.hasWorkspace"
           @click="handleCommand('new-folder')"
@@ -117,20 +133,27 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <div class="workspace-tabs__scroll">
+      <div class="flex min-w-0 gap-1.5 overflow-x-auto pb-px [scrollbar-width:thin]">
         <button
           v-for="tab in workspaceStore.openTabs"
           :key="tab.relativePath"
           type="button"
-          class="workspace-tabs__item"
-          :class="{ 'is-active': workspaceStore.activeTabPath === tab.relativePath }"
+          class="inline-flex min-w-0 max-w-60 items-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-1.5 text-text-muted transition-colors hover:border-brand hover:bg-surface-muted hover:text-text"
+          :class="{
+            'border-brand bg-surface-muted text-text':
+              workspaceStore.activeTabPath === tab.relativePath
+          }"
           :title="tab.relativePath"
           @click="workspaceStore.setActiveTab(tab.relativePath)"
         >
-          <span class="workspace-tabs__dirty" :class="{ 'is-visible': tab.isDirty }">●</span>
-          <span class="workspace-tabs__label">{{ tab.title }}</span>
           <span
-            class="workspace-tabs__close"
+            class="text-[10px] leading-none text-brand-emphasis"
+            :class="tab.isDirty ? 'visible' : 'invisible'"
+            >●</span
+          >
+          <span class="ellipsis text-xs">{{ tab.title }}</span>
+          <span
+            class="inline-flex items-center justify-center rounded-md p-px hover:bg-surface"
             @click.stop="workspaceStore.closeTab(tab.relativePath)"
           >
             <X :size="12" aria-hidden="true" />
@@ -139,9 +162,10 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <button
-      type="button"
-      class="workspace-tabs__save"
+    <UiButton
+      variant="soft"
+      size="sm"
+      class="max-[760px]:justify-self-end"
       :disabled="
         !workspaceStore.activeTab ||
         !workspaceStore.activeTab.isDirty ||
@@ -151,168 +175,13 @@ onBeforeUnmount(() => {
     >
       <Save :size="14" aria-hidden="true" />
       保存
-    </button>
+    </UiButton>
 
-    <p v-if="!hasOpenTabs" class="workspace-tabs__empty">尚未打开文件</p>
+    <p
+      v-if="!hasOpenTabs"
+      class="pointer-events-none absolute left-14.5 m-0 text-xs text-text-muted"
+    >
+      尚未打开文件
+    </p>
   </section>
 </template>
-
-<style scoped>
-.workspace-tabs {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 12px;
-  background: rgb(var(--ui-surface));
-  padding: 7px;
-}
-
-.workspace-tabs__left {
-  position: relative;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.workspace-tabs__plus,
-.workspace-tabs__save {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 8px;
-  background: rgb(var(--ui-surface-muted));
-  color: rgb(var(--ui-text));
-  padding: 6px 9px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.workspace-tabs__plus.is-open,
-.workspace-tabs__plus:hover,
-.workspace-tabs__save:hover:not(:disabled) {
-  border-color: rgb(var(--ui-brand));
-}
-
-.workspace-tabs__save:disabled {
-  opacity: 0.5;
-}
-
-.workspace-tabs__menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 10;
-  display: grid;
-  gap: 4px;
-  min-width: 160px;
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 10px;
-  background: rgb(var(--ui-surface));
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
-  padding: 6px;
-}
-
-.workspace-tabs__menu button {
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: rgb(var(--ui-text));
-  text-align: left;
-  padding: 7px 8px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.workspace-tabs__menu button:hover:not(:disabled) {
-  border-color: rgb(var(--ui-border));
-  background: rgb(var(--ui-surface-muted));
-}
-
-.workspace-tabs__menu button:disabled {
-  opacity: 0.45;
-}
-
-.workspace-tabs__scroll {
-  min-width: 0;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  padding-bottom: 1px;
-}
-
-.workspace-tabs__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgb(var(--ui-border));
-  border-radius: 8px;
-  background: rgb(var(--ui-surface));
-  color: rgb(var(--ui-text-muted));
-  min-width: 0;
-  max-width: 240px;
-  padding: 6px 8px;
-}
-
-.workspace-tabs__item.is-active {
-  border-color: rgb(var(--ui-brand));
-  background: rgb(var(--ui-surface-muted));
-  color: rgb(var(--ui-text));
-}
-
-.workspace-tabs__dirty {
-  visibility: hidden;
-  color: rgb(var(--ui-brand-emphasis));
-  font-size: 10px;
-  line-height: 1;
-}
-
-.workspace-tabs__dirty.is-visible {
-  visibility: visible;
-}
-
-.workspace-tabs__label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-}
-
-.workspace-tabs__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  padding: 1px;
-}
-
-.workspace-tabs__close:hover {
-  background: rgb(var(--ui-surface));
-}
-
-.workspace-tabs__empty {
-  position: absolute;
-  left: 58px;
-  margin: 0;
-  font-size: 12px;
-  color: rgb(var(--ui-text-muted));
-  pointer-events: none;
-}
-
-@media (max-width: 760px) {
-  .workspace-tabs {
-    grid-template-columns: 1fr;
-  }
-
-  .workspace-tabs__save {
-    justify-self: end;
-  }
-}
-</style>

@@ -19,14 +19,32 @@ const windowState = ref<AppWindowState>({
   isFocused: true
 })
 
+const isMacPlatform = computed(() => platform.value === 'darwin')
+const isMaximized = computed(() => windowState.value.isMaximized || windowState.value.isFullScreen)
+const isFocused = computed(() => windowState.value.isFocused)
+
 const shellClasses = computed(() => ({
   'platform-win32': platform.value === 'win32',
   'platform-darwin': platform.value === 'darwin',
   'platform-linux': platform.value === 'linux',
-  'is-maximized': windowState.value.isMaximized || windowState.value.isFullScreen,
-  'is-focused': windowState.value.isFocused,
-  'is-blurred': !windowState.value.isFocused
+  'is-maximized': isMaximized.value,
+  'is-focused': isFocused.value,
+  'is-blurred': !isFocused.value
 }))
+
+const titlebarClasses = computed(() => [
+  'fixed left-0 top-0 z-[1000] h-[env(titlebar-area-height,var(--tb-height))] w-full select-none [backdrop-filter:blur(12px)]',
+  isFocused.value ? 'bg-[rgb(var(--ui-titlebar))]' : 'bg-[rgb(var(--ui-titlebar-inactive))]'
+])
+
+const titlebarContentClasses = computed(() => [
+  'relative left-[env(titlebar-area-x,0)] grid h-full w-[env(titlebar-area-width,100%)] grid-cols-[max-content_1fr_max-content] items-center gap-2.5 px-3 max-[620px]:grid-cols-[1fr_max-content]',
+  isMacPlatform.value ? (isMaximized.value ? 'pl-16' : 'pl-[var(--tb-mac-left-padding)]') : ''
+])
+
+const windowControlsSpacerClasses = computed(() =>
+  isMacPlatform.value ? 'w-0' : 'w-[var(--tb-controls-width)]'
+)
 
 const overlay = (navigator as Navigator & { windowControlsOverlay?: WindowControlsOverlayLike })
   .windowControlsOverlay
@@ -61,26 +79,26 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app-shell" :class="shellClasses">
-    <header class="immersive-titlebar">
-      <div class="tb-content">
-        <div class="tb-left">
-          <img src="@resources/logo.svg" alt="" class="tb-logo-icon" aria-hidden="true" />
-          <span class="tb-workspace">TransCraft Workspace</span>
+  <div :class="shellClasses" class="relative h-full min-h-0">
+    <header
+      :class="titlebarClasses"
+      style="-webkit-app-region: drag; -webkit-user-select: none; user-select: none"
+    >
+      <div :class="titlebarContentClasses">
+        <div class="flex min-w-55 items-center gap-2.5 max-[760px]:min-w-0">
+          <img src="@resources/logo.svg" alt="" class="h-3.75 w-3.75 shrink-0" aria-hidden="true" />
         </div>
 
-        <div class="tb-center">
-          <span class="tb-title-pill">Workspace</span>
-        </div>
-
-        <div class="tb-right">
-          <ThemeSwitcher class="tb-control" />
-          <div aria-hidden="true" class="tb-window-controls-spacer"></div>
+        <div class="flex min-w-0 items-center justify-end gap-2">
+          <ThemeSwitcher style="-webkit-app-region: no-drag" />
+          <div aria-hidden="true" :class="windowControlsSpacerClasses"></div>
         </div>
       </div>
     </header>
 
-    <main class="app-main">
+    <main
+      class="relative h-full min-h-0 overflow-hidden pt-[env(titlebar-area-height,var(--tb-height))] *:h-full *:min-h-0"
+    >
       <RouterView />
     </main>
   </div>
