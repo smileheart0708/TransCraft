@@ -88,7 +88,7 @@ function revealNode(): void {
 <template>
   <li class="list-none">
     <div
-      class="group grid min-h-7.5 grid-cols-[14px_16px_minmax(0,1fr)_auto] items-center gap-1.5 rounded-lg border border-transparent px-1.5 py-0.75 hover:border-border hover:bg-surface-muted"
+      class="group grid min-h-7.5 select-none grid-cols-[14px_16px_minmax(0,1fr)_auto] items-center gap-1.5 rounded-lg border border-transparent px-1.5 py-0.75 hover:border-border hover:bg-surface-muted"
       :class="{
         'border-brand bg-surface-muted': isSelected
       }"

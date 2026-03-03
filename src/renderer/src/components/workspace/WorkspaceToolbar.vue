@@ -23,7 +23,7 @@ async function handleRefresh(): Promise<void> {
 <template>
   <UiPanel
     as="section"
-    class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 p-3 max-[760px]:grid-cols-1"
+    class="grid select-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2.5 p-3 max-[760px]:grid-cols-1"
   >
     <div class="grid min-w-0 gap-0.75">
       <p class="kicker">Workspace</p>

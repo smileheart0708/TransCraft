@@ -120,7 +120,13 @@ onBeforeUnmount(() => {
     >
       <div :class="titlebarContentClasses" style="-webkit-app-region: no-drag">
         <div class="flex min-w-55 items-center gap-2.5 max-[760px]:min-w-0">
-          <img src="@resources/logo.svg" alt="" class="h-3.75 w-3.75 shrink-0" aria-hidden="true" />
+          <img
+            src="@resources/logo.svg"
+            alt=""
+            class="h-3.75 w-3.75 shrink-0"
+            draggable="false"
+            aria-hidden="true"
+          />
           <UiDropdown
             :items="fileMenuItems"
             model-value=""

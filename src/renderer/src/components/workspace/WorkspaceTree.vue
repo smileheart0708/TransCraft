@@ -22,7 +22,7 @@ function createAtRoot(kind: WorkspaceEntryKind): void {
 </script>
 
 <template>
-  <UiPanel as="aside" full-height class="grid grid-rows-[auto_minmax(0,1fr)]">
+  <UiPanel as="aside" full-height class="grid select-none grid-rows-[auto_minmax(0,1fr)]">
     <header class="panel-header">
       <p class="kicker text-xs tracking-[0.08em]">文件资源管理器</p>
       <div class="inline-flex gap-1.5">
