@@ -5,6 +5,7 @@ import { LayoutPanelTop } from 'lucide-vue-next'
 import ThemeSwitcher from '@renderer/components/common/ThemeSwitcher.vue'
 import UiIconButton from '@renderer/components/ui/UiIconButton.vue'
 import UiDropdown from '@renderer/components/ui/UiDropdown.vue'
+import { useWorkspaceStore } from '../stores/useWorkspaceStore'
 
 type FileMenuItem = {
   value: string
@@ -12,13 +13,17 @@ type FileMenuItem = {
 }
 
 const fileMenuItems: FileMenuItem[] = [{ value: 'open-workspace', label: '打开工作区' }]
+const workspaceStore = useWorkspaceStore()
 
 const isFileMenuOpen = ref(false)
 const isAnyMenuOpen = computed(() => isFileMenuOpen.value)
 
 function handleFileMenuSelect(value: string): void {
-  console.log('Selected:', value)
-  // TODO: 实现具体功能
+  isFileMenuOpen.value = false
+
+  if (value === 'open-workspace') {
+    void workspaceStore.pickWorkspace()
+  }
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
