@@ -26,11 +26,42 @@ function handleFileMenuSelect(value: string): void {
   }
 }
 
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  ) {
+    return true
+  }
+
+  return Boolean(target.closest('.cm-editor'))
+}
+
 function handleKeyDown(event: KeyboardEvent): void {
   if (event.altKey && event.key.toLowerCase() === 'f') {
     event.preventDefault()
     isFileMenuOpen.value = !isFileMenuOpen.value
+    return
   }
+
+  if (event.key !== 'F2' || event.altKey || event.ctrlKey || event.metaKey) {
+    return
+  }
+
+  if (isTypingTarget(event.target)) {
+    return
+  }
+
+  if (!workspaceStore.selectedPath) {
+    return
+  }
+
+  event.preventDefault()
+  workspaceStore.startRename(workspaceStore.selectedPath)
 }
 
 function handleTitlebarSpacerPointerDown(): void {

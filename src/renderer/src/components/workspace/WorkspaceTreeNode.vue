@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   ChevronRight,
   FileText,
@@ -33,6 +33,7 @@ const isExpanded = computed(() =>
 const children = computed(() => workspaceStore.getChildren(props.node.relativePath))
 const isLoading = computed(() => workspaceStore.isParentLoading(props.node.relativePath))
 const isSelected = computed(() => workspaceStore.selectedPath === props.node.relativePath)
+const isRenaming = computed(() => workspaceStore.renamingPath === props.node.relativePath)
 const rowIndent = computed(() => ({
   '--node-depth': `${props.depth}`
 }))
@@ -40,7 +41,34 @@ const hintIndent = computed(() => ({
   paddingLeft: `calc((${props.depth} + 1) * 14px + 22px)`
 }))
 
+const renameInputRef = ref<HTMLInputElement | null>(null)
+const renameDraft = ref('')
+const isSubmittingRename = ref(false)
+
+watch(
+  isRenaming,
+  async (nextValue) => {
+    if (!nextValue) {
+      isSubmittingRename.value = false
+      return
+    }
+
+    renameDraft.value = props.node.name
+
+    await nextTick()
+    renameInputRef.value?.focus()
+    renameInputRef.value?.select()
+  },
+  { immediate: true }
+)
+
 function handleNodeClick(): void {
+  if (isRenaming.value) return
+
+  if (workspaceStore.renamingPath && workspaceStore.renamingPath !== props.node.relativePath) {
+    workspaceStore.stopRename()
+  }
+
   workspaceStore.setSelectedPath(props.node.relativePath)
 
   if (isDirectory.value) {
@@ -53,6 +81,7 @@ function handleNodeClick(): void {
 
 function createChild(kind: WorkspaceEntryKind): void {
   if (!isDirectory.value) return
+  workspaceStore.stopRename()
 
   const defaultName = kind === 'file' ? 'untitled.txt' : 'new-folder'
   const pathSuggestion = `${props.node.relativePath}/${defaultName}`
@@ -65,14 +94,37 @@ function createChild(kind: WorkspaceEntryKind): void {
   void workspaceStore.createEntryByRelativePath(input, kind)
 }
 
-function renameNode(): void {
-  const nextName = window.prompt('请输入新名称', props.node.name)
-  if (!nextName || nextName === props.node.name) return
+function startRenameNode(): void {
+  workspaceStore.startRename(props.node.relativePath)
+}
 
-  void workspaceStore.renameEntry(props.node.relativePath, nextName)
+function cancelRenameNode(): void {
+  if (!isRenaming.value) return
+  workspaceStore.stopRename()
+}
+
+async function submitRenameNode(): Promise<void> {
+  if (!isRenaming.value || isSubmittingRename.value) return
+
+  const nextName = renameDraft.value.trim()
+  if (!nextName || nextName === props.node.name) {
+    workspaceStore.stopRename()
+    return
+  }
+
+  isSubmittingRename.value = true
+  const renamed = await workspaceStore.renameEntry(props.node.relativePath, nextName)
+  isSubmittingRename.value = false
+
+  if (renamed) return
+
+  await nextTick()
+  renameInputRef.value?.focus()
+  renameInputRef.value?.select()
 }
 
 function deleteNode(): void {
+  workspaceStore.stopRename()
   const label = isDirectory.value ? '文件夹' : '文件'
   const confirmed = window.confirm(`确认删除${label} ${props.node.name} ?`)
   if (!confirmed) return
@@ -81,6 +133,7 @@ function deleteNode(): void {
 }
 
 function revealNode(): void {
+  workspaceStore.stopRename()
   void workspaceStore.revealInOs(props.node.relativePath)
 }
 </script>
@@ -111,9 +164,26 @@ function revealNode(): void {
         <FileText v-else :size="14" />
       </span>
 
-      <span class="ellipsis text-xs text-text">{{ node.name }}</span>
+      <span class="relative min-w-0">
+        <span class="ellipsis text-xs text-text" :class="isRenaming ? 'invisible' : ''">
+          {{ node.name }}
+        </span>
+        <input
+          v-if="isRenaming"
+          ref="renameInputRef"
+          v-model="renameDraft"
+          type="text"
+          class="workspace-node-rename-input absolute inset-0 w-full rounded border border-brand/60 bg-surface px-1.5 text-text outline-none focus:border-brand"
+          @click.stop
+          @pointerdown.stop
+          @keydown.enter.prevent="submitRenameNode"
+          @keydown.esc.prevent="cancelRenameNode"
+          @blur="submitRenameNode"
+        />
+      </span>
 
       <span
+        v-if="!isRenaming"
         class="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
         :class="isSelected ? 'opacity-100' : ''"
       >
@@ -138,7 +208,7 @@ function revealNode(): void {
         >
           <FolderPlus :size="12" aria-hidden="true" />
         </UiIconButton>
-        <UiIconButton variant="surface" size="xs" title="重命名" @click.stop="renameNode">
+        <UiIconButton variant="surface" size="xs" title="重命名" @click.stop="startRenameNode">
           <Pencil :size="12" aria-hidden="true" />
         </UiIconButton>
         <UiIconButton variant="surface" size="xs" title="删除" @click.stop="deleteNode">
@@ -169,3 +239,11 @@ function revealNode(): void {
     </ul>
   </li>
 </template>
+
+<style scoped>
+.workspace-node-rename-input {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+}
+</style>

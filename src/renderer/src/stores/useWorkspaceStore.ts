@@ -39,6 +39,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const openTabs = ref<WorkspaceTab[]>([])
   const activeTabPath = ref<string | null>(null)
   const selectedPath = ref<string | null>(null)
+  const renamingPath = ref<string | null>(null)
   const lastError = ref<string | null>(null)
   const isWatching = ref(false)
 
@@ -66,6 +67,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     expandedByPath.value = {}
     loadingByParent.value = {}
     selectedPath.value = null
+    renamingPath.value = null
   }
 
   function resetTabsState(): void {
@@ -101,6 +103,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   function setSelectedPath(nextPath: string | null): void {
     selectedPath.value = nextPath
+  }
+
+  function startRename(relativePath: string): void {
+    selectedPath.value = relativePath
+    renamingPath.value = relativePath
+  }
+
+  function stopRename(): void {
+    renamingPath.value = null
   }
 
   function setLoading(parentRelativePath: string | null, nextValue: boolean): void {
@@ -476,7 +487,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     await createEntry(parentRelativePath, entryName, kind)
   }
 
-  async function renameEntry(relativePath: string, nextName: string): Promise<void> {
+  async function renameEntry(relativePath: string, nextName: string): Promise<boolean> {
     try {
       const result = await workspaceClient.renameEntry({
         relativePath,
@@ -509,9 +520,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       }
 
       await refreshLoadedTree()
+      stopRename()
       clearError()
+      return true
     } catch (error) {
       setError(toErrorMessage(error, 'Failed to rename workspace entry.'))
+      return false
     }
   }
 
@@ -526,6 +540,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
       if (selectedPath.value && startsWithPathPrefix(selectedPath.value, relativePath)) {
         selectedPath.value = null
+      }
+      if (renamingPath.value && startsWithPathPrefix(renamingPath.value, relativePath)) {
+        renamingPath.value = null
       }
 
       await refreshLoadedTree()
@@ -556,6 +573,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         startsWithPathPrefix(selectedPath.value, eventPayload.relativePath)
       ) {
         selectedPath.value = null
+      }
+      if (
+        renamingPath.value &&
+        startsWithPathPrefix(renamingPath.value, eventPayload.relativePath)
+      ) {
+        renamingPath.value = null
       }
 
       if (eventPayload.eventType === 'unlinkDir') {
@@ -632,12 +655,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     activeTabPath,
     activeTab,
     selectedPath,
+    renamingPath,
     lastError,
     isWatching,
     getChildren,
     isExpanded,
     isParentLoading,
     setSelectedPath,
+    startRename,
+    stopRename,
     clearError,
     initializeWorkspace,
     refreshWorkspaceState,
