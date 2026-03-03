@@ -2,7 +2,7 @@
 appId: cqxx.transcraft.app
 
 # 应用产品名称，显示在安装程序和应用标题栏中
-productName: transcraft
+productName: TransCraft
 
 # 构建资源目录配置
 directories:
@@ -25,7 +25,7 @@ asarUnpack:
 # Windows 平台配置
 win:
   # Windows 可执行文件名称
-  executableName: transcraft
+  executableName: TransCraft
 
 # NSIS 安装程序配置（Windows）
 nsis:

@@ -1,4 +1,4 @@
-# transcraft
+# TransCraft
 
 一个使用 Vue 和 TypeScript 的 Electron 应用程序
 
