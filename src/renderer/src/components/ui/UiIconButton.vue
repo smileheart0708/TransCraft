@@ -1,28 +1,36 @@
 <script setup lang="ts">
-import UiButton from './UiButton.vue'
+import { computed, useAttrs } from 'vue'
 
-type UiIconButtonVariant = 'soft' | 'surface' | 'ghost'
-type UiIconButtonSize = 'xs' | 'sm'
+type UiIconButtonSize = 'xs' | 'sm' | 'md'
 type NativeButtonType = 'button' | 'submit' | 'reset'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    variant?: UiIconButtonVariant
     size?: UiIconButtonSize
-    active?: boolean
     type?: NativeButtonType
   }>(),
   {
-    variant: 'soft',
     size: 'sm',
-    active: false,
     type: 'button'
   }
 )
+
+const attrs = useAttrs()
+
+const sizeClasses: Record<UiIconButtonSize, string> = {
+  xs: 'h-5 w-5',
+  sm: 'h-6 w-6',
+  md: 'h-8 w-8'
+}
+
+const buttonClasses = computed(() => [
+  'inline-flex items-center justify-center rounded-lg bg-transparent text-text-muted transition-colors hover:text-text disabled:cursor-default disabled:opacity-50',
+  sizeClasses[props.size]
+])
 </script>
 
 <template>
-  <UiButton :variant="variant" :size="size" :active="active" :type="type" icon-only>
+  <button :type="type" :class="buttonClasses" v-bind="attrs">
     <slot />
-  </UiButton>
+  </button>
 </template>

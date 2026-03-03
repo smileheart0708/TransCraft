@@ -120,9 +120,7 @@ onBeforeUnmount(() => {
   >
     <template #trigger="{ open }">
       <UiIconButton
-        variant="surface"
-        size="sm"
-        :active="open"
+        size="md"
         :aria-label="`Theme mode ${currentThemeLabel}. Click to cycle, long press for quick selection.`"
         :aria-pressed="themePreference !== 'system'"
         aria-haspopup="menu"
@@ -134,7 +132,7 @@ onBeforeUnmount(() => {
         @click="handleButtonClick"
         @keydown="handleButtonKeydown"
       >
-        <component :is="currentThemeIcon" :size="16" :stroke-width="2" aria-hidden="true" />
+        <component :is="currentThemeIcon" :size="18" :stroke-width="2" aria-hidden="true" />
       </UiIconButton>
     </template>
   </UiDropdown>
