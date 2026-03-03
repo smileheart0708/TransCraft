@@ -34,6 +34,11 @@ const OVERLAY_THEMES = {
   }
 } satisfies Record<ResolvedTheme, OverlayThemePalette>
 
+const WINDOW_BACKGROUND_COLORS = {
+  dark: '#171615',
+  light: '#f9f8f5'
+} satisfies Record<ResolvedTheme, string>
+
 export function isThemePreference(value: unknown): value is ThemePreference {
   return value === 'system' || value === 'light' || value === 'dark'
 }
@@ -50,6 +55,7 @@ export class ThemeService {
     })
 
     this.preference = this.store.get('theme', 'system')
+    this.applyNativeThemeSource()
   }
 
   getPreference(): ThemePreference {
@@ -63,6 +69,11 @@ export class ThemeService {
   setPreference(preference: ThemePreference): void {
     this.preference = preference
     this.store.set('theme', preference)
+    this.applyNativeThemeSource()
+  }
+
+  getWindowBackgroundColor(): string {
+    return WINDOW_BACKGROUND_COLORS[this.resolveTheme()]
   }
 
   resolveOverlayTheme(isFocused = true): TitleBarOverlay {
@@ -81,5 +92,9 @@ export class ThemeService {
         ? 'dark'
         : 'light'
       : this.preference
+  }
+
+  private applyNativeThemeSource(): void {
+    nativeTheme.themeSource = this.preference
   }
 }

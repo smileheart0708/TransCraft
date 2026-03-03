@@ -35,11 +35,17 @@ function updateTitleBarTheme(window: BrowserWindow): void {
   window.setTitleBarOverlay(themeService.resolveOverlayTheme(window.isFocused()))
 }
 
-function updateAllTitleBarThemes(): void {
-  if (!SUPPORTS_TITLEBAR_OVERLAY) return
+function updateWindowBackground(window: BrowserWindow): void {
+  if (window.isDestroyed()) return
+  window.setBackgroundColor(themeService.getWindowBackgroundColor())
+}
 
+function updateAllWindowAppearance(): void {
   const allWindows = BrowserWindow.getAllWindows()
-  allWindows.forEach((win) => updateTitleBarTheme(win))
+  allWindows.forEach((win) => {
+    updateTitleBarTheme(win)
+    updateWindowBackground(win)
+  })
 }
 
 function registerWindowStateBridge(window: BrowserWindow): void {
@@ -75,6 +81,7 @@ function createWindow(): void {
     height: windowState.height,
     show: false,
     autoHideMenuBar: true,
+    backgroundColor: themeService.getWindowBackgroundColor(),
     titleBarStyle: 'hidden',
     ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: themeService.resolveOverlayTheme() } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -111,7 +118,7 @@ function createWindow(): void {
 
 nativeTheme.on('updated', () => {
   if (!themeService.isFollowingSystem()) return
-  updateAllTitleBarThemes()
+  updateAllWindowAppearance()
 })
 
 // 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
@@ -143,7 +150,7 @@ app.whenReady().then(() => {
   ipcMain.handle('theme:set-preference', (_event, preference: unknown) => {
     if (!isThemePreference(preference)) return
     themeService.setPreference(preference)
-    updateAllTitleBarThemes()
+    updateAllWindowAppearance()
   })
 
   ipcMain.handle('theme:get-preference', () => themeService.getPreference())
