@@ -63,6 +63,7 @@ function createAtRoot(kind: WorkspaceEntryKind): void {
 .workspace-tree {
   min-width: 0;
   height: 100%;
+  min-height: 0;
   border: 1px solid rgb(var(--ui-border));
   border-radius: 12px;
   background: rgb(var(--ui-surface));

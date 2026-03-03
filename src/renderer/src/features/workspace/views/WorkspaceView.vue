@@ -33,11 +33,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .workspace-view {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 10px;
   padding: 12px;
+  overflow: hidden;
 }
 
 .workspace-view__content {
@@ -45,6 +47,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
   gap: 10px;
+  overflow: hidden;
+}
+
+.workspace-view__content > * {
+  min-height: 0;
 }
 
 @media (max-width: 960px) {

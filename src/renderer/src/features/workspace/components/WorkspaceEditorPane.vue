@@ -135,12 +135,15 @@ onBeforeUnmount(() => {
 
 .workspace-editor__surface {
   height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-rows: 1fr auto;
 }
 
 .workspace-editor__host {
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .workspace-editor__statusbar {
