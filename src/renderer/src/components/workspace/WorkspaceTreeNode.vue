@@ -11,8 +11,8 @@ import {
   Trash2,
   FilePlus2
 } from 'lucide-vue-next'
-import { useWorkspaceStore } from '../stores/useWorkspaceStore'
-import type { WorkspaceEntryKind, WorkspaceNodeDTO } from '../types/workspace'
+import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
+import type { WorkspaceEntryKind, WorkspaceNodeDTO } from '../../types/workspace'
 
 defineOptions({
   name: 'WorkspaceTreeNode'

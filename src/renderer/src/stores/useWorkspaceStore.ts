@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { workspaceClient, WorkspaceClientError } from '../services/workspaceClient'
+import { workspaceClient, WorkspaceClientError } from '../services/workspace/workspaceClient'
 import {
   ROOT_PARENT_KEY,
   getBaseName,

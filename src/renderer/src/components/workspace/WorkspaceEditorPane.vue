@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { FileWarning } from 'lucide-vue-next'
-import { useWorkspaceStore } from '../stores/useWorkspaceStore'
-import { CodeEditorService } from '../services/codeEditorService'
+import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
+import { CodeEditorService } from '../../services/workspace/codeEditorService'
 
 const workspaceStore = useWorkspaceStore()
 
@@ -26,7 +26,7 @@ function ensureEditorMounted(): void {
 
   if (!editorService) {
     editorService = new CodeEditorService({
-      onChange: (nextContent) => {
+      onChange: (nextContent: string) => {
         workspaceStore.updateActiveTabContent(nextContent)
       },
       onSaveShortcut: () => {

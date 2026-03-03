@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { FolderPlus, FilePlus2 } from 'lucide-vue-next'
 import WorkspaceTreeNode from './WorkspaceTreeNode.vue'
-import { useWorkspaceStore } from '../stores/useWorkspaceStore'
-import type { WorkspaceEntryKind } from '../types/workspace'
+import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
+import type { WorkspaceEntryKind } from '../../types/workspace'
 
 const workspaceStore = useWorkspaceStore()
 

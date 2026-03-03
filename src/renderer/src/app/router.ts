@@ -1,5 +1,5 @@
 import { createMemoryHistory, createRouter } from 'vue-router'
-import WorkspaceView from '@renderer/features/workspace/views/WorkspaceView.vue'
+import WorkspaceView from '@renderer/views/WorkspaceView.vue'
 
 export const router = createRouter({
   history: createMemoryHistory(),

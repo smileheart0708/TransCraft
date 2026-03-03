@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
-import WorkspaceToolbar from '../components/WorkspaceToolbar.vue'
-import WorkspaceTabs from '../components/WorkspaceTabs.vue'
-import WorkspaceTree from '../components/WorkspaceTree.vue'
-import WorkspaceEditorPane from '../components/WorkspaceEditorPane.vue'
-import WorkspaceEmptyState from '../components/WorkspaceEmptyState.vue'
+import WorkspaceToolbar from '../components/workspace/WorkspaceToolbar.vue'
+import WorkspaceTabs from '../components/workspace/WorkspaceTabs.vue'
+import WorkspaceTree from '../components/workspace/WorkspaceTree.vue'
+import WorkspaceEditorPane from '../components/workspace/WorkspaceEditorPane.vue'
+import WorkspaceEmptyState from '../components/workspace/WorkspaceEmptyState.vue'
 import { useWorkspaceStore } from '../stores/useWorkspaceStore'
 
 const workspaceStore = useWorkspaceStore()

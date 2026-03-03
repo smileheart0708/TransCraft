@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { FolderOpen, RefreshCw, AlertCircle } from 'lucide-vue-next'
-import { useWorkspaceStore } from '../stores/useWorkspaceStore'
+import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
 
 const workspaceStore = useWorkspaceStore()
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Plus, Save, X } from 'lucide-vue-next'
-import { useWorkspaceStore } from '../stores/useWorkspaceStore'
-import { getParentPath } from '../types/workspace'
-import type { WorkspaceEntryKind } from '../types/workspace'
+import { useWorkspaceStore } from '../../stores/useWorkspaceStore'
+import { getParentPath } from '../../types/workspace'
+import type { WorkspaceEntryKind } from '../../types/workspace'
 
 const workspaceStore = useWorkspaceStore()
 
