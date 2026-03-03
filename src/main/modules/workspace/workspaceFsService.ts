@@ -10,6 +10,7 @@ import {
   unlink,
   writeFile as writeFileWithFs
 } from 'node:fs/promises'
+import writeFileAtomic from 'write-file-atomic'
 import { basename, dirname, resolve, relative, isAbsolute } from 'node:path'
 import {
   WorkspacePathGuard,
@@ -205,7 +206,7 @@ export class WorkspaceFsService {
       }
     }
 
-    await writeFileWithFs(resolvedFilePath.absolutePath, request.content, {
+    await writeFileAtomic(resolvedFilePath.absolutePath, request.content, {
       encoding: 'utf-8'
     })
 
