@@ -9,6 +9,9 @@ import {
   lineNumbers
 } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { javascript } from '@codemirror/lang-javascript'
+import { json } from '@codemirror/lang-json'
+import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 
 type CodeEditorCallbacks = {
   onChange: (content: string) => void
@@ -49,7 +52,30 @@ function createEditorTheme(): Extension {
   })
 }
 
-function createExtensions(callbacks: CodeEditorCallbacks): Extension[] {
+function resolveLanguageExtensions(relativePath: string): Extension[] {
+  const normalizedPath = relativePath.toLowerCase()
+
+  if (normalizedPath.endsWith('.json') || normalizedPath.endsWith('.jsonc')) {
+    return [json()]
+  }
+
+  if (
+    normalizedPath.endsWith('.js') ||
+    normalizedPath.endsWith('.mjs') ||
+    normalizedPath.endsWith('.cjs') ||
+    normalizedPath.endsWith('.jsx')
+  ) {
+    return [
+      javascript({
+        jsx: normalizedPath.endsWith('.jsx')
+      })
+    ]
+  }
+
+  return []
+}
+
+function createExtensions(callbacks: CodeEditorCallbacks, relativePath: string): Extension[] {
   return [
     lineNumbers(),
     highlightSpecialChars(),
@@ -70,6 +96,8 @@ function createExtensions(callbacks: CodeEditorCallbacks): Extension[] {
       ...defaultKeymap,
       ...historyKeymap
     ]),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    ...resolveLanguageExtensions(relativePath),
     createEditorTheme(),
     EditorView.updateListener.of((update) => {
       if (!update.docChanged) return
@@ -87,18 +115,21 @@ export class CodeEditorService {
     this.callbacks = callbacks
   }
 
-  mount(container: HTMLElement, content: string): void {
+  mount(container: HTMLElement, content: string, relativePath: string): void {
     this.destroy()
 
     const startState = EditorState.create({
       doc: content,
-      extensions: createExtensions({
-        onChange: (nextContent) => {
-          if (this.suppressOnChange) return
-          this.callbacks.onChange(nextContent)
+      extensions: createExtensions(
+        {
+          onChange: (nextContent) => {
+            if (this.suppressOnChange) return
+            this.callbacks.onChange(nextContent)
+          },
+          onSaveShortcut: this.callbacks.onSaveShortcut
         },
-        onSaveShortcut: this.callbacks.onSaveShortcut
-      })
+        relativePath
+      )
     })
 
     this.editorView = new EditorView({

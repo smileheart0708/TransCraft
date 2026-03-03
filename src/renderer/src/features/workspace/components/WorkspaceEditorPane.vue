@@ -8,6 +8,7 @@ const workspaceStore = useWorkspaceStore()
 
 const editorHostRef = ref<HTMLElement | null>(null)
 let editorService: CodeEditorService | null = null
+let mountedEditorPath: string | null = null
 
 const activeTab = computed(() => workspaceStore.activeTab)
 const canEdit = computed(() => Boolean(activeTab.value && !activeTab.value.isBinary))
@@ -16,8 +17,12 @@ function ensureEditorMounted(): void {
   if (!canEdit.value || !editorHostRef.value) {
     editorService?.destroy()
     editorService = null
+    mountedEditorPath = null
     return
   }
+
+  const currentPath = activeTab.value?.relativePath ?? ''
+  const currentContent = activeTab.value?.content ?? ''
 
   if (!editorService) {
     editorService = new CodeEditorService({
@@ -28,12 +33,15 @@ function ensureEditorMounted(): void {
         void workspaceStore.saveActiveTab()
       }
     })
+  }
 
-    editorService.mount(editorHostRef.value, activeTab.value?.content ?? '')
+  if (mountedEditorPath !== currentPath) {
+    editorService.mount(editorHostRef.value, currentContent, currentPath)
+    mountedEditorPath = currentPath
     return
   }
 
-  editorService.setContent(activeTab.value?.content ?? '')
+  editorService.setContent(currentContent)
 }
 
 watch(
@@ -58,6 +66,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   editorService?.destroy()
   editorService = null
+  mountedEditorPath = null
 })
 </script>
 
