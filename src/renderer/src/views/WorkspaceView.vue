@@ -26,9 +26,9 @@ onBeforeUnmount(() => {
     <WorkspaceTabs />
 
     <section
-      class="grid min-h-0 grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-2.5 overflow-hidden max-[960px]:grid-cols-1"
+      class="grid min-h-0 grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-2.5 overflow-hidden"
     >
-      <WorkspaceTree class="min-h-0 max-[960px]:min-h-60" />
+      <WorkspaceTree class="min-h-0" />
       <WorkspaceEditorPane v-if="workspaceStore.hasWorkspace" class="min-h-0" />
       <WorkspaceEmptyState v-else class="min-h-0" />
     </section>

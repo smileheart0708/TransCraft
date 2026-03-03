@@ -79,6 +79,8 @@ function createWindow(): void {
     y: windowState.y,
     width: windowState.width,
     height: windowState.height,
+    minWidth: 800,
+    minHeight: 600,
     show: false,
     autoHideMenuBar: true,
     backgroundColor: themeService.getWindowBackgroundColor(),
