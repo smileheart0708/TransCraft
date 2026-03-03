@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterView } from 'vue-router'
+import { LayoutPanelTop } from 'lucide-vue-next'
 import ThemeSwitcher from '@renderer/components/common/ThemeSwitcher.vue'
+import UiIconButton from '@renderer/components/ui/UiIconButton.vue'
 
 type AppPlatform = ReturnType<(typeof window.api.titleBar)['getPlatform']>
 type AppWindowState = Awaited<ReturnType<(typeof window.api.titleBar)['getState']>>
@@ -41,10 +43,6 @@ const titlebarContentClasses = computed(() => [
   'relative left-[env(titlebar-area-x,0)] grid h-full w-[env(titlebar-area-width,100%)] grid-cols-[max-content_1fr_max-content] items-center gap-2.5 px-3 max-[620px]:grid-cols-[1fr_max-content]',
   isMacPlatform.value ? (isMaximized.value ? 'pl-16' : 'pl-[var(--tb-mac-left-padding)]') : ''
 ])
-
-const windowControlsSpacerClasses = computed(() =>
-  isMacPlatform.value ? 'w-0' : 'w-[var(--tb-controls-width)]'
-)
 
 const overlay = (navigator as Navigator & { windowControlsOverlay?: WindowControlsOverlayLike })
   .windowControlsOverlay
@@ -90,8 +88,10 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="flex min-w-0 items-center justify-end gap-2">
+          <UiIconButton style="-webkit-app-region: no-drag" aria-label="布局面板">
+            <LayoutPanelTop :size="16" />
+          </UiIconButton>
           <ThemeSwitcher style="-webkit-app-region: no-drag" />
-          <div aria-hidden="true" :class="windowControlsSpacerClasses"></div>
         </div>
       </div>
     </header>
