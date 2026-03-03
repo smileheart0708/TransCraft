@@ -1,11 +1,12 @@
 import type { BrowserWindowConstructorOptions } from 'electron'
-import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { app, BrowserWindow, ipcMain, nativeTheme, shell } from 'electron'
+import { join } from 'node:path'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import windowStateKeeper from 'electron-window-state'
 import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater, checkForUpdates } from './updater'
-import { ThemeService, isThemePreference } from './services/themeService'
+import { ThemeService, isThemePreference } from './modules/theme/themeService'
+import { registerWorkspaceIpc } from './modules/workspace/workspaceIpc'
 
 type TitleBarWindowState = {
   isMaximized: boolean
@@ -68,10 +69,9 @@ function registerWindowStateBridge(window: BrowserWindow): void {
 }
 
 function createWindow(): void {
-  // 初始化窗口状态管理器
   const windowState = windowStateKeeper({
-    defaultWidth: 900,
-    defaultHeight: 670
+    defaultWidth: 1200,
+    defaultHeight: 760
   })
 
   const windowOptions: BrowserWindowConstructorOptions = {
@@ -92,8 +92,6 @@ function createWindow(): void {
   }
 
   const mainWindow = new BrowserWindow(windowOptions)
-
-  // 让 electron-window-state 管理窗口状态
   windowState.manage(mainWindow)
 
   registerWindowStateBridge(mainWindow)
@@ -107,12 +105,10 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // 基于 electron-vite 的渲染进程热更新
-  // 开发环境加载远程 URL，生产环境加载本地 HTML 文件
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -121,19 +117,19 @@ nativeTheme.on('updated', () => {
   updateAllWindowAppearance()
 })
 
-// 当 Electron 完成初始化并准备创建浏览器窗口时调用此方法
-// 某些 API 只能在此事件发生后使用
+let disposeWorkspaceIpc: (() => Promise<void>) | null = null
+
 app.whenReady().then(() => {
-  // 为 Windows 设置应用用户模型 ID
   electronApp.setAppUserModelId('com.electron')
 
-  // 开发环境下默认使用 F12 打开或关闭 DevTools
-  // 生产环境下忽略 CommandOrControl + R 刷新快捷键
-  // 参考: https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
+  app.on('browser-window-created', (_event, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  const workspaceIpcRegistration = registerWorkspaceIpc()
+  disposeWorkspaceIpc = workspaceIpcRegistration.dispose
+
+  ipcMain.removeHandler('titlebar:get-state')
   ipcMain.handle('titlebar:get-state', (event) => {
     const targetWindow = BrowserWindow.fromWebContents(event.sender)
     if (!targetWindow) {
@@ -147,39 +143,36 @@ app.whenReady().then(() => {
     return getWindowState(targetWindow)
   })
 
+  ipcMain.removeHandler('theme:set-preference')
   ipcMain.handle('theme:set-preference', (_event, preference: unknown) => {
     if (!isThemePreference(preference)) return
     themeService.setPreference(preference)
     updateAllWindowAppearance()
   })
 
+  ipcMain.removeHandler('theme:get-preference')
   ipcMain.handle('theme:get-preference', () => themeService.getPreference())
 
-  // 注册手动检查更新的 IPC 处理器
+  ipcMain.removeHandler('updater:check-for-updates')
   ipcMain.handle('updater:check-for-updates', () => {
     checkForUpdates()
   })
 
   createWindow()
-
-  // 启动自动更新检查
   setupAutoUpdater()
 
-  app.on('activate', function () {
-    // 在 macOS 上，当点击 dock 图标且没有其他窗口打开时
-    // 通常会重新创建一个窗口
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// 当所有窗口关闭时退出应用，macOS 除外
-// 在 macOS 上，应用程序及其菜单栏通常保持活动状态
-// 直到用户使用 Cmd + Q 显式退出
+app.on('before-quit', () => {
+  if (!disposeWorkspaceIpc) return
+  void disposeWorkspaceIpc()
+})
+
 app.on('window-all-closed', () => {
   if (!IS_MAC) {
     app.quit()
   }
 })
-
-// 在此文件中可以包含应用程序特定的主进程代码
-// 也可以将它们放在单独的文件中并在此引入

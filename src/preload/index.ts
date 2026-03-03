@@ -1,80 +1,24 @@
-import type { IpcRendererEvent } from 'electron'
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-
-type DesktopPlatform = 'win32' | 'darwin' | 'linux'
-
-type TitleBarWindowState = {
-  isMaximized: boolean
-  isFullScreen: boolean
-  isFocused: boolean
-}
-
-type TitleBarStateListener = (state: TitleBarWindowState) => void
-
-type TitleBarAPI = {
-  getState: () => Promise<TitleBarWindowState>
-  onStateChange: (listener: TitleBarStateListener) => () => void
-  getPlatform: () => DesktopPlatform
-}
-
-type ThemePreference = 'system' | 'light' | 'dark'
-
-type ThemeAPI = {
-  getPreference: () => Promise<ThemePreference>
-  setPreference: (preference: ThemePreference) => Promise<void>
-}
-
-type UpdaterAPI = {
-  checkForUpdates: () => Promise<void>
-}
+import { titleBarApi, type TitleBarAPI } from './apis/titleBarApi'
+import { themeApi, type ThemeAPI } from './apis/themeApi'
+import { updaterApi, type UpdaterAPI } from './apis/updaterApi'
+import { workspaceApi, type WorkspaceAPI } from './apis/workspaceApi'
 
 type RendererAPI = {
   titleBar: TitleBarAPI
   theme: ThemeAPI
   updater: UpdaterAPI
-}
-
-function getPlatform(): DesktopPlatform {
-  switch (process.platform) {
-    case 'win32':
-    case 'darwin':
-    case 'linux':
-      return process.platform
-    default:
-      return 'linux'
-  }
+  workspace: WorkspaceAPI
 }
 
 const api: RendererAPI = {
-  titleBar: {
-    getState: () => ipcRenderer.invoke('titlebar:get-state') as Promise<TitleBarWindowState>,
-    onStateChange: (listener) => {
-      const wrappedListener = (_event: IpcRendererEvent, state: TitleBarWindowState): void => {
-        listener(state)
-      }
-
-      ipcRenderer.on('titlebar:state-changed', wrappedListener)
-
-      return (): void => {
-        ipcRenderer.removeListener('titlebar:state-changed', wrappedListener)
-      }
-    },
-    getPlatform
-  },
-  theme: {
-    getPreference: () => ipcRenderer.invoke('theme:get-preference') as Promise<ThemePreference>,
-    setPreference: (preference) =>
-      ipcRenderer.invoke('theme:set-preference', preference) as Promise<void>
-  },
-  updater: {
-    checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates') as Promise<void>
-  }
+  titleBar: titleBarApi,
+  theme: themeApi,
+  updater: updaterApi,
+  workspace: workspaceApi
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
