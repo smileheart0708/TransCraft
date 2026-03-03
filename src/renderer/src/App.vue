@@ -76,7 +76,7 @@ onBeforeUnmount(() => {
     <header class="immersive-titlebar">
       <div class="tb-content">
         <div class="tb-left">
-          <span aria-hidden="true" class="tb-logo-dot"></span>
+          <img src="@resources/logo.svg" alt="" class="tb-logo-icon" aria-hidden="true" />
           <span class="tb-workspace">TransCraft Workspace</span>
         </div>
 

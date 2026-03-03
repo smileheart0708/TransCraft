@@ -86,12 +86,10 @@ body {
   gap: 10px;
 }
 
-.tb-logo-dot {
-  display: inline-flex;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgb(var(--ui-brand));
+.tb-logo-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .tb-workspace {
