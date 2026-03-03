@@ -312,6 +312,34 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     activeTabPath.value = candidate?.relativePath ?? null
   }
 
+  function moveTab(relativePath: string, targetPath: string, insertAfter: boolean): void {
+    if (relativePath === targetPath) return
+
+    const fromIndex = openTabs.value.findIndex((tab) => tab.relativePath === relativePath)
+    const targetIndex = openTabs.value.findIndex((tab) => tab.relativePath === targetPath)
+
+    if (fromIndex < 0 || targetIndex < 0) return
+
+    const nextTabs = [...openTabs.value]
+    const [movingTab] = nextTabs.splice(fromIndex, 1)
+
+    if (!movingTab) return
+
+    let insertionIndex = targetIndex
+
+    if (fromIndex < targetIndex) {
+      insertionIndex -= 1
+    }
+
+    if (insertAfter) {
+      insertionIndex += 1
+    }
+
+    insertionIndex = Math.max(0, Math.min(insertionIndex, nextTabs.length))
+    nextTabs.splice(insertionIndex, 0, movingTab)
+    openTabs.value = nextTabs
+  }
+
   function updateActiveTabContent(nextContent: string): void {
     if (!activeTabPath.value) return
 
@@ -356,11 +384,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  async function saveActiveTab(): Promise<void> {
-    const tab = activeTab.value
+  async function saveTab(relativePath: string): Promise<boolean> {
+    const tab = openTabs.value.find((item) => item.relativePath === relativePath)
 
-    if (!tab || tab.isBinary || !tab.isDirty) {
-      return
+    if (!tab || tab.isBinary) {
+      return false
+    }
+
+    if (!tab.isDirty) {
+      return true
     }
 
     try {
@@ -372,7 +404,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
       if (!writeResult.ok) {
         setError(`[CONFLICT] ${tab.relativePath} changed on disk. Reload before saving.`)
-        return
+        return false
       }
 
       openTabs.value = openTabs.value.map((item) => {
@@ -389,9 +421,19 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       })
 
       clearError()
+      return true
     } catch (error) {
       setError(toErrorMessage(error, 'Failed to save file.'))
+      return false
     }
+  }
+
+  async function saveActiveTab(): Promise<void> {
+    if (!activeTabPath.value) {
+      return
+    }
+
+    await saveTab(activeTabPath.value)
   }
 
   async function createEntry(
@@ -604,8 +646,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     toggleDirectory,
     openFile,
     closeTab,
+    moveTab,
     setActiveTab,
     updateActiveTabContent,
+    saveTab,
     saveActiveTab,
     createEntry,
     createEntryByRelativePath,
