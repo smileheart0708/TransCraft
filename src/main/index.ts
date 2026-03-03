@@ -1,11 +1,11 @@
-import type { BrowserWindowConstructorOptions, TitleBarOverlay } from 'electron'
+import type { BrowserWindowConstructorOptions } from 'electron'
 import { app, shell, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import windowStateKeeper from 'electron-window-state'
-import ElectronStore from 'electron-store'
 import icon from '../../resources/icon.png?asset'
 import { setupAutoUpdater, checkForUpdates } from './updater'
+import { ThemeService, isThemePreference } from './services/themeService'
 
 type TitleBarWindowState = {
   isMaximized: boolean
@@ -13,64 +13,9 @@ type TitleBarWindowState = {
   isFocused: boolean
 }
 
-type ThemePreference = 'system' | 'light' | 'dark'
-type ResolvedTheme = Exclude<ThemePreference, 'system'>
-type OverlayThemePalette = {
-  activeColor: string
-  inactiveColor: string
-  activeSymbolColor: string
-  inactiveSymbolColor: string
-  height: number
-}
-
-type StoreSchema = {
-  theme: ThemePreference
-}
-
 const IS_MAC = process.platform === 'darwin'
 const SUPPORTS_TITLEBAR_OVERLAY = process.platform === 'win32' || process.platform === 'linux'
-
-const OVERLAY_THEMES = {
-  dark: {
-    activeColor: '#1e1d1b',
-    inactiveColor: '#171615',
-    activeSymbolColor: '#eeebe6',
-    inactiveSymbolColor: '#ada79d',
-    height: 36
-  },
-  light: {
-    activeColor: '#f5f4f0',
-    inactiveColor: '#efece6',
-    activeSymbolColor: '#23211f',
-    inactiveSymbolColor: '#5d5952',
-    height: 36
-  }
-} satisfies Record<ResolvedTheme, OverlayThemePalette>
-
-const store = new ElectronStore<StoreSchema>({
-  defaults: {
-    theme: 'system'
-  }
-})
-
-let themePreference: ThemePreference = store.get('theme', 'system')
-
-function resolveOverlayTheme(preference: ThemePreference, isFocused = true): TitleBarOverlay {
-  const resolvedTheme: ResolvedTheme =
-    preference === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : preference
-
-  const palette = OVERLAY_THEMES[resolvedTheme]
-
-  return {
-    color: isFocused ? palette.activeColor : palette.inactiveColor,
-    symbolColor: isFocused ? palette.activeSymbolColor : palette.inactiveSymbolColor,
-    height: palette.height
-  }
-}
-
-function isThemePreference(value: unknown): value is ThemePreference {
-  return value === 'system' || value === 'light' || value === 'dark'
-}
+const themeService = new ThemeService()
 
 function getWindowState(window: BrowserWindow): TitleBarWindowState {
   return {
@@ -87,7 +32,7 @@ function publishWindowState(window: BrowserWindow): void {
 
 function updateTitleBarTheme(window: BrowserWindow): void {
   if (!SUPPORTS_TITLEBAR_OVERLAY || window.isDestroyed()) return
-  window.setTitleBarOverlay(resolveOverlayTheme(themePreference, window.isFocused()))
+  window.setTitleBarOverlay(themeService.resolveOverlayTheme(window.isFocused()))
 }
 
 function updateAllTitleBarThemes(): void {
@@ -131,7 +76,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
-    ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: resolveOverlayTheme(themePreference) } : {}),
+    ...(SUPPORTS_TITLEBAR_OVERLAY ? { titleBarOverlay: themeService.resolveOverlayTheme() } : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
@@ -165,7 +110,7 @@ function createWindow(): void {
 }
 
 nativeTheme.on('updated', () => {
-  if (themePreference !== 'system') return
+  if (!themeService.isFollowingSystem()) return
   updateAllTitleBarThemes()
 })
 
@@ -197,10 +142,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle('theme:set-preference', (_event, preference: unknown) => {
     if (!isThemePreference(preference)) return
-    themePreference = preference
-    store.set('theme', preference)
+    themeService.setPreference(preference)
     updateAllTitleBarThemes()
   })
+
+  ipcMain.handle('theme:get-preference', () => themeService.getPreference())
 
   // 注册手动检查更新的 IPC 处理器
   ipcMain.handle('updater:check-for-updates', () => {

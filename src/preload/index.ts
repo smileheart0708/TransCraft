@@ -18,10 +18,10 @@ type TitleBarAPI = {
   getPlatform: () => DesktopPlatform
 }
 
-type ThemePreference = 'auto' | 'light' | 'dark'
-type MainThemePreference = 'system' | 'light' | 'dark'
+type ThemePreference = 'system' | 'light' | 'dark'
 
 type ThemeAPI = {
+  getPreference: () => Promise<ThemePreference>
   setPreference: (preference: ThemePreference) => Promise<void>
 }
 
@@ -63,11 +63,9 @@ const api: RendererAPI = {
     getPlatform
   },
   theme: {
+    getPreference: () => ipcRenderer.invoke('theme:get-preference') as Promise<ThemePreference>,
     setPreference: (preference) =>
-      ipcRenderer.invoke(
-        'theme:set-preference',
-        (preference === 'auto' ? 'system' : preference) as MainThemePreference
-      ) as Promise<void>
+      ipcRenderer.invoke('theme:set-preference', preference) as Promise<void>
   },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates') as Promise<void>

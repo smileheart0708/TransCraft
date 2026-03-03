@@ -1,31 +1,51 @@
 import { computed, readonly, ref, watch, type ComputedRef, type Ref } from 'vue'
+import {
+  THEME_CYCLE_ORDER,
+  applyThemeToDocument,
+  getStoredThemePreference,
+  observeSystemTheme,
+  resolveTheme,
+  setStoredThemePreference,
+  type ResolvedTheme,
+  type ThemePreference
+} from '@renderer/services/themeService'
 
-export type ThemePreference = 'auto' | 'light' | 'dark'
-export type ResolvedTheme = Exclude<ThemePreference, 'auto'>
+export type { ThemePreference, ResolvedTheme }
 
-const THEME_CYCLE_ORDER: ThemePreference[] = ['auto', 'light', 'dark']
-const THEME_MEDIA_QUERY = '(prefers-color-scheme: dark)'
-
-const themePreference = ref<ThemePreference>('auto')
+const themePreference = ref<ThemePreference>('system')
 const systemTheme = ref<ResolvedTheme>('light')
 const resolvedTheme = computed<ResolvedTheme>(() =>
-  themePreference.value === 'auto' ? systemTheme.value : themePreference.value
+  resolveTheme(themePreference.value, systemTheme.value)
 )
 
 let isInitialized = false
-let detachMediaQueryListener: (() => void) | null = null
-
-function applyThemeToDocument(theme: ResolvedTheme): void {
-  const root = document.documentElement
-  root.dataset['theme'] = theme
-  root.style.colorScheme = theme
-}
+let hasLoadedStoredPreference = false
+let hasUserChangedPreferenceBeforeLoad = false
+let detachSystemThemeListener: (() => void) | null = null
 
 async function syncThemePreference(preference: ThemePreference): Promise<void> {
   try {
-    await window.api.theme.setPreference(preference)
+    await setStoredThemePreference(preference)
   } catch (error) {
     console.error('[theme] Failed to sync preference with main process.', error)
+  }
+}
+
+async function loadStoredThemePreference(): Promise<void> {
+  if (hasLoadedStoredPreference || typeof window === 'undefined') return
+
+  try {
+    const storedPreference = await getStoredThemePreference()
+    if (!hasUserChangedPreferenceBeforeLoad) {
+      themePreference.value = storedPreference
+    }
+  } catch (error) {
+    console.error('[theme] Failed to load preference from main process.', error)
+  } finally {
+    hasLoadedStoredPreference = true
+    if (hasUserChangedPreferenceBeforeLoad) {
+      void syncThemePreference(themePreference.value)
+    }
   }
 }
 
@@ -33,57 +53,48 @@ function initTheme(): void {
   if (isInitialized || typeof window === 'undefined') return
   isInitialized = true
 
-  const mediaQuery = window.matchMedia(THEME_MEDIA_QUERY)
-  systemTheme.value = mediaQuery.matches ? 'dark' : 'light'
+  detachSystemThemeListener = observeSystemTheme((nextSystemTheme) => {
+    systemTheme.value = nextSystemTheme
+  })
 
-  const onMediaQueryChange = (event: MediaQueryListEvent): void => {
-    systemTheme.value = event.matches ? 'dark' : 'light'
-  }
-
-  if (typeof mediaQuery.addEventListener === 'function') {
-    mediaQuery.addEventListener('change', onMediaQueryChange)
-    detachMediaQueryListener = () => mediaQuery.removeEventListener('change', onMediaQueryChange)
-    return
-  }
-
-  mediaQuery.addListener(onMediaQueryChange)
-  detachMediaQueryListener = () => mediaQuery.removeListener(onMediaQueryChange)
+  void loadStoredThemePreference()
 }
 
 function setThemePreference(nextPreference: ThemePreference): void {
+  if (!hasLoadedStoredPreference) {
+    hasUserChangedPreferenceBeforeLoad = true
+  }
+
   themePreference.value = nextPreference
+
+  if (hasLoadedStoredPreference) {
+    void syncThemePreference(nextPreference)
+  }
 }
 
 function cycleThemePreference(): ThemePreference {
   const currentIndex = THEME_CYCLE_ORDER.indexOf(themePreference.value)
   const nextIndex = (currentIndex + 1) % THEME_CYCLE_ORDER.length
-  const nextPreference = THEME_CYCLE_ORDER[nextIndex] ?? 'auto'
-  themePreference.value = nextPreference
+  const nextPreference = THEME_CYCLE_ORDER[nextIndex] ?? 'system'
+  setThemePreference(nextPreference)
   return nextPreference
 }
 
 watch(
   resolvedTheme,
   (theme) => {
-    if (typeof document === 'undefined') return
     applyThemeToDocument(theme)
-  },
-  { immediate: true }
-)
-
-watch(
-  themePreference,
-  (preference) => {
-    void syncThemePreference(preference)
   },
   { immediate: true }
 )
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    detachMediaQueryListener?.()
-    detachMediaQueryListener = null
+    detachSystemThemeListener?.()
+    detachSystemThemeListener = null
     isInitialized = false
+    hasLoadedStoredPreference = false
+    hasUserChangedPreferenceBeforeLoad = false
   })
 }
 

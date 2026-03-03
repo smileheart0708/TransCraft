@@ -15,9 +15,10 @@ declare global {
     getPlatform: () => DesktopPlatform
   }
 
-  type ThemePreference = 'auto' | 'light' | 'dark'
+  type ThemePreference = 'system' | 'light' | 'dark'
 
   interface ThemeAPI {
+    getPreference: () => Promise<ThemePreference>
     setPreference: (preference: ThemePreference) => Promise<void>
   }
 

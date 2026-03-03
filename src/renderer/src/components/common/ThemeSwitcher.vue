@@ -7,13 +7,13 @@ import { useTheme, type ThemePreference } from '@renderer/composables/useTheme'
 const LONG_PRESS_DURATION = 450
 
 const themeItems: Array<{ value: ThemePreference; label: string; hint: string }> = [
-  { value: 'auto', label: 'Auto', hint: 'Follow system appearance' },
+  { value: 'system', label: 'System', hint: 'Follow system appearance' },
   { value: 'light', label: 'Light', hint: 'Always use light theme' },
   { value: 'dark', label: 'Dark', hint: 'Always use dark theme' }
 ]
 
 const themeLabelMap: Record<ThemePreference, string> = {
-  auto: 'Auto',
+  system: 'System',
   light: 'Light',
   dark: 'Dark'
 }
@@ -27,7 +27,7 @@ const longPressTimer = ref<number | null>(null)
 const currentThemeLabel = computed(() => themeLabelMap[themePreference.value])
 
 const themeIconMap = {
-  auto: MonitorCog,
+  system: MonitorCog,
   light: Sun,
   dark: Moon
 } as const
@@ -35,7 +35,7 @@ const themeIconMap = {
 const currentThemeIcon = computed(() => themeIconMap[themePreference.value])
 
 function isThemePreference(value: string): value is ThemePreference {
-  return value === 'auto' || value === 'light' || value === 'dark'
+  return value === 'system' || value === 'light' || value === 'dark'
 }
 
 function setDropdownOpen(nextOpen: boolean): void {
@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
         class="theme-switcher"
         :class="{ 'is-open': open }"
         :aria-label="`Theme mode ${currentThemeLabel}. Click to cycle, long press for quick selection.`"
-        :aria-pressed="themePreference !== 'auto'"
+        :aria-pressed="themePreference !== 'system'"
         aria-haspopup="menu"
         :aria-expanded="open"
         @pointerdown="handlePointerDown"
