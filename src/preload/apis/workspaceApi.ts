@@ -6,6 +6,7 @@ type WorkspaceEntryKind = 'file' | 'directory'
 type WorkspaceErrorCode =
   | 'NO_WORKSPACE'
   | 'INVALID_PATH'
+  | 'INVALID_ARCHIVE'
   | 'OUTSIDE_WORKSPACE'
   | 'NOT_FOUND'
   | 'ALREADY_EXISTS'
@@ -13,9 +14,18 @@ type WorkspaceErrorCode =
   | 'IS_DIRECTORY'
   | 'BINARY_FILE'
   | 'CONFLICT'
+  | 'ARCHIVE_ENTRY_UNSAFE'
+  | 'ARCHIVE_EXTRACT_FAILED'
 
 type WorkspaceStateDTO = {
   rootPath: string | null
+}
+
+type ImportArchiveResultDTO = {
+  rootPath: string | null
+  imported: boolean
+  importedRootPath: string | null
+  archiveFileName: string | null
 }
 
 type WorkspaceNodeDTO = {
@@ -119,6 +129,7 @@ type WorkspaceWatchStateDTO = {
 export type WorkspaceAPI = {
   getState: () => Promise<WorkspaceResult<WorkspaceStateDTO>>
   pickRoot: () => Promise<WorkspaceResult<WorkspaceStateDTO>>
+  importArchive: () => Promise<WorkspaceResult<ImportArchiveResultDTO>>
   listChildren: (relativePath: string | null) => Promise<WorkspaceResult<WorkspaceNodeDTO[]>>
   readFile: (relativePath: string) => Promise<WorkspaceResult<OpenFileDTO>>
   writeFile: (request: WriteFileRequestDTO) => Promise<WorkspaceResult<WriteFileResultDTO>>
@@ -136,6 +147,10 @@ export const workspaceApi: WorkspaceAPI = {
     ipcRenderer.invoke('workspace:get-state') as Promise<WorkspaceResult<WorkspaceStateDTO>>,
   pickRoot: () =>
     ipcRenderer.invoke('workspace:pick-root') as Promise<WorkspaceResult<WorkspaceStateDTO>>,
+  importArchive: () =>
+    ipcRenderer.invoke('workspace:import-archive') as Promise<
+      WorkspaceResult<ImportArchiveResultDTO>
+    >,
   listChildren: (relativePath) =>
     ipcRenderer.invoke('workspace:list-children', {
       relativePath

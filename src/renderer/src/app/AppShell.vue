@@ -10,9 +10,17 @@ import { useWorkspaceStore } from '../stores/useWorkspaceStore'
 type FileMenuItem = {
   value: string
   label: string
+  hint?: string
 }
 
-const fileMenuItems: FileMenuItem[] = [{ value: 'open-workspace', label: '打开工作区' }]
+const fileMenuItems: FileMenuItem[] = [
+  { value: 'open-workspace', label: '打开工作区' },
+  {
+    value: 'import-archive',
+    label: '导入压缩包',
+    hint: '支持 .zip .mcworld .mcaddon .mcpack'
+  }
+]
 const workspaceStore = useWorkspaceStore()
 
 const isFileMenuOpen = ref(false)
@@ -23,6 +31,11 @@ function handleFileMenuSelect(value: string): void {
 
   if (value === 'open-workspace') {
     void workspaceStore.pickWorkspace()
+    return
+  }
+
+  if (value === 'import-archive') {
+    void workspaceStore.importArchiveWorkspace()
   }
 }
 

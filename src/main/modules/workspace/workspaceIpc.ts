@@ -1,5 +1,9 @@
 import { app, dialog, ipcMain } from 'electron'
 import { requireSenderWindow } from '../../ipc/senderGuard'
+import {
+  IMPORT_ARCHIVE_CONFIRM_SIZE_BYTES,
+  WorkspaceArchiveImportService
+} from './workspaceArchiveImportService'
 import { WorkspaceFsService } from './workspaceFsService'
 import { WorkspacePathGuard } from './workspacePathGuard'
 import { isValidWorkspacePath, normalizeWorkspacePath } from './workspacePathValidator'
@@ -10,6 +14,7 @@ import {
   toWorkspaceErrorDTO,
   type CreateEntryRequestDTO,
   type DeleteEntryRequestDTO,
+  type ImportArchiveResultDTO,
   type ListChildrenRequestDTO,
   type RenameEntryRequestDTO,
   type RevealInOsRequestDTO,
@@ -36,6 +41,7 @@ export function registerWorkspaceIpc(): WorkspaceIpcRegistration {
   const pathGuard = new WorkspacePathGuard(() => workspaceStore.getRootPath())
   const workspaceFsService = new WorkspaceFsService(workspaceStore, pathGuard)
   const workspaceWatchService = new WorkspaceWatchService()
+  const workspaceArchiveImportService = new WorkspaceArchiveImportService()
 
   const channelHandlers: Array<
     [string, (...args: unknown[]) => Promise<WorkspaceResult<unknown>>]
@@ -80,6 +86,101 @@ export function registerWorkspaceIpc(): WorkspaceIpcRegistration {
           workspaceStore.setRootPath(normalizeWorkspacePath(pickedPath))
           await workspaceWatchService.refreshIfWatching(senderWindow, workspaceStore.getRootPath())
           return workspaceStore.getState()
+        })
+      }
+    ],
+    [
+      'workspace:import-archive',
+      async (event) => {
+        return withWorkspaceResult(async () => {
+          const senderWindow = requireSenderWindow(
+            event as Parameters<typeof requireSenderWindow>[0]
+          )
+
+          const selection = await dialog.showOpenDialog(senderWindow, {
+            title: 'Import Archive Workspace',
+            properties: ['openFile'],
+            filters: [
+              {
+                name: 'Archive Files',
+                extensions: workspaceArchiveImportService.getSupportedDialogExtensions()
+              }
+            ]
+          })
+
+          const cancelledResult: ImportArchiveResultDTO = {
+            rootPath: workspaceStore.getRootPath(),
+            imported: false,
+            importedRootPath: null,
+            archiveFileName: null
+          }
+
+          if (selection.canceled || selection.filePaths.length === 0) {
+            return cancelledResult
+          }
+
+          const selectedArchivePath = selection.filePaths[0]
+          if (!selectedArchivePath) {
+            return cancelledResult
+          }
+
+          const preparedImport = await workspaceArchiveImportService.prepareArchiveImport(
+            selectedArchivePath,
+            app.getPath('userData')
+          )
+
+          if (preparedImport.archiveSize > IMPORT_ARCHIVE_CONFIRM_SIZE_BYTES) {
+            const sizeConfirm = await dialog.showMessageBox(senderWindow, {
+              type: 'warning',
+              title: 'Large Archive Detected',
+              message: 'The selected archive is larger than 1GB. Continue importing?',
+              detail:
+                'Importing very large archives may take longer and consume substantial disk space.',
+              buttons: ['Continue Import', 'Cancel'],
+              defaultId: 0,
+              cancelId: 1,
+              noLink: true
+            })
+
+            if (sizeConfirm.response !== 0) {
+              return cancelledResult
+            }
+          }
+
+          let overwriteExisting = false
+          if (preparedImport.targetExists) {
+            const overwriteConfirm = await dialog.showMessageBox(senderWindow, {
+              type: 'warning',
+              title: 'Existing Import Folder',
+              message: `Folder "${preparedImport.targetDirectoryName}" already exists. Replace it?`,
+              detail: 'Replacing will overwrite the previous imported data in that folder.',
+              buttons: ['Replace', 'Cancel'],
+              defaultId: 0,
+              cancelId: 1,
+              noLink: true
+            })
+
+            if (overwriteConfirm.response !== 0) {
+              return cancelledResult
+            }
+
+            overwriteExisting = true
+          }
+
+          const importedRootPath = await workspaceArchiveImportService.executeArchiveImport({
+            preparedImport,
+            overwriteExisting
+          })
+
+          workspaceStore.setRootPath(normalizeWorkspacePath(importedRootPath))
+          await workspaceWatchService.refreshIfWatching(senderWindow, workspaceStore.getRootPath())
+
+          return {
+            rootPath: workspaceStore.getRootPath(),
+            imported: true,
+            importedRootPath: importedRootPath,
+            archiveFileName: preparedImport.archiveFileName
+          } satisfies ImportArchiveResultDTO
         })
       }
     ],

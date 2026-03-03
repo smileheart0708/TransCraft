@@ -5,6 +5,7 @@ export type WorkspaceWatchEventType = 'add' | 'addDir' | 'change' | 'unlink' | '
 export type WorkspaceErrorCode =
   | 'NO_WORKSPACE'
   | 'INVALID_PATH'
+  | 'INVALID_ARCHIVE'
   | 'OUTSIDE_WORKSPACE'
   | 'NOT_FOUND'
   | 'ALREADY_EXISTS'
@@ -12,9 +13,18 @@ export type WorkspaceErrorCode =
   | 'IS_DIRECTORY'
   | 'BINARY_FILE'
   | 'CONFLICT'
+  | 'ARCHIVE_ENTRY_UNSAFE'
+  | 'ARCHIVE_EXTRACT_FAILED'
 
 export type WorkspaceStateDTO = {
   rootPath: string | null
+}
+
+export type ImportArchiveResultDTO = {
+  rootPath: string | null
+  imported: boolean
+  importedRootPath: string | null
+  archiveFileName: string | null
 }
 
 export type WorkspaceNodeDTO = {

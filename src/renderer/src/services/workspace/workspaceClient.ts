@@ -31,6 +31,11 @@ export const workspaceClient = {
     return unwrapResult(response)
   },
 
+  async importArchive(): Promise<ImportArchiveResultDTO> {
+    const response = await window.api.workspace.importArchive()
+    return unwrapResult(response)
+  },
+
   async listChildren(relativePath: string | null): Promise<WorkspaceNodeDTO[]> {
     const response = await window.api.workspace.listChildren(relativePath)
     return unwrapResult(response)

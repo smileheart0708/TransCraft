@@ -42,6 +42,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const renamingPath = ref<string | null>(null)
   const lastError = ref<string | null>(null)
   const isWatching = ref(false)
+  const isImportingArchive = ref(false)
+  const importRevealToken = ref(0)
 
   let fsEventDisposer: (() => void) | null = null
 
@@ -187,30 +189,60 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     await startWatch()
   }
 
+  async function applyWorkspaceSelectionState(nextState: WorkspaceStateDTO): Promise<void> {
+    const hasRootChanged = nextState.rootPath !== rootPath.value
+
+    rootPath.value = nextState.rootPath
+
+    if (!nextState.rootPath) {
+      resetTreeState()
+      resetTabsState()
+      await stopWatch()
+      return
+    }
+
+    if (hasRootChanged) {
+      resetTreeState()
+      resetTabsState()
+    }
+
+    await loadChildren(null)
+    await startWatch()
+  }
+
   async function pickWorkspace(): Promise<void> {
     try {
       const nextState = await workspaceClient.pickRoot()
-      const hasRootChanged = nextState.rootPath !== rootPath.value
-
-      rootPath.value = nextState.rootPath
-
-      if (!nextState.rootPath) {
-        resetTreeState()
-        resetTabsState()
-        await stopWatch()
-        return
-      }
-
-      if (hasRootChanged) {
-        resetTreeState()
-        resetTabsState()
-      }
-
-      await loadChildren(null)
-      await startWatch()
+      await applyWorkspaceSelectionState(nextState)
       clearError()
     } catch (error) {
       setError(toErrorMessage(error, 'Failed to pick workspace folder.'))
+    }
+  }
+
+  async function importArchiveWorkspace(): Promise<void> {
+    if (isImportingArchive.value) {
+      return
+    }
+
+    isImportingArchive.value = true
+
+    try {
+      const importResult = await workspaceClient.importArchive()
+      if (!importResult.imported) {
+        return
+      }
+
+      await applyWorkspaceSelectionState({
+        rootPath: importResult.rootPath
+      })
+
+      importRevealToken.value += 1
+      clearError()
+    } catch (error) {
+      setError(toErrorMessage(error, 'Failed to import archive workspace.'))
+    } finally {
+      isImportingArchive.value = false
     }
   }
 
@@ -658,6 +690,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     renamingPath,
     lastError,
     isWatching,
+    isImportingArchive,
+    importRevealToken,
     getChildren,
     isExpanded,
     isParentLoading,
@@ -669,6 +703,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     refreshWorkspaceState,
     refreshLoadedTree,
     pickWorkspace,
+    importArchiveWorkspace,
     toggleDirectory,
     openFile,
     closeTab,

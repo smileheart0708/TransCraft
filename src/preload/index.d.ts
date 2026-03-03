@@ -31,6 +31,7 @@ declare global {
   type WorkspaceErrorCode =
     | 'NO_WORKSPACE'
     | 'INVALID_PATH'
+    | 'INVALID_ARCHIVE'
     | 'OUTSIDE_WORKSPACE'
     | 'NOT_FOUND'
     | 'ALREADY_EXISTS'
@@ -38,9 +39,18 @@ declare global {
     | 'IS_DIRECTORY'
     | 'BINARY_FILE'
     | 'CONFLICT'
+    | 'ARCHIVE_ENTRY_UNSAFE'
+    | 'ARCHIVE_EXTRACT_FAILED'
 
   interface WorkspaceStateDTO {
     rootPath: string | null
+  }
+
+  interface ImportArchiveResultDTO {
+    rootPath: string | null
+    imported: boolean
+    importedRootPath: string | null
+    archiveFileName: string | null
   }
 
   interface WorkspaceNodeDTO {
@@ -144,6 +154,7 @@ declare global {
   interface WorkspaceAPI {
     getState: () => Promise<WorkspaceResult<WorkspaceStateDTO>>
     pickRoot: () => Promise<WorkspaceResult<WorkspaceStateDTO>>
+    importArchive: () => Promise<WorkspaceResult<ImportArchiveResultDTO>>
     listChildren: (relativePath: string | null) => Promise<WorkspaceResult<WorkspaceNodeDTO[]>>
     readFile: (relativePath: string) => Promise<WorkspaceResult<OpenFileDTO>>
     writeFile: (request: WriteFileRequestDTO) => Promise<WorkspaceResult<WriteFileResultDTO>>
