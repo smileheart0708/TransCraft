@@ -22,5 +22,8 @@
   },
   "editor.quickSuggestions": {
     "strings": true
+  },
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml"
   }
 }
