@@ -175,8 +175,11 @@ export function registerWorkspaceIpc(): WorkspaceIpcRegistration {
   }
 
   app.on('browser-window-created', (_appEvent, window) => {
+    const windowId = window.id
     window.on('closed', () => {
-      void workspaceWatchService.stopForWindow(window)
+      void workspaceWatchService.stopForWindowById(windowId).catch((error) => {
+        console.error('[workspace:watch] failed to stop watcher for closed window', error)
+      })
     })
   })
 

@@ -84,29 +84,41 @@ export class WorkspaceWatchService {
         nodeType: toNodeType(eventName)
       }
 
-      window.webContents.send('workspace:fs-changed', payload)
+      try {
+        window.webContents.send('workspace:fs-changed', payload)
+      } catch (error) {
+        console.error('[workspace:watch] failed to send fs event to renderer', error)
+      }
     })
 
     watcher.on('error', (error) => {
       console.error('[workspace:watch] watcher error', error)
     })
 
-    this.watchersByWindowId.set(window.webContents.id, {
+    this.watchersByWindowId.set(window.id, {
       rootPath,
       watcher
     })
   }
 
   async stopForWindow(window: BrowserWindow): Promise<void> {
-    const existing = this.watchersByWindowId.get(window.webContents.id)
+    const existing = this.watchersByWindowId.get(window.id)
     if (!existing) return
 
-    this.watchersByWindowId.delete(window.webContents.id)
+    this.watchersByWindowId.delete(window.id)
+    await existing.watcher.close()
+  }
+
+  async stopForWindowById(windowId: number): Promise<void> {
+    const existing = this.watchersByWindowId.get(windowId)
+    if (!existing) return
+
+    this.watchersByWindowId.delete(windowId)
     await existing.watcher.close()
   }
 
   async refreshIfWatching(window: BrowserWindow, nextRootPath: string | null): Promise<void> {
-    if (!this.watchersByWindowId.has(window.webContents.id)) {
+    if (!this.watchersByWindowId.has(window.id)) {
       return
     }
 

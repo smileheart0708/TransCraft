@@ -168,7 +168,9 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   if (!disposeWorkspaceIpc) return
-  void disposeWorkspaceIpc()
+  void disposeWorkspaceIpc().catch((error) => {
+    console.error('[workspace] failed to dispose workspace IPC during quit', error)
+  })
 })
 
 app.on('window-all-closed', () => {
